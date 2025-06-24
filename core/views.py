@@ -77,20 +77,25 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     def get_queryset(self):
-        cache_key = f'products_{self.request.query_params.get("category", "all")}'
-        cached_products = cache.get(cache_key)
-        
-        if cached_products is None:
-            logger.info(f"Products cache miss for category: {self.request.query_params.get('category', 'all')}")
-            queryset = Product.objects.all()
-            category = self.request.query_params.get('category')
-            if category:
-                queryset = queryset.filter(category__name=category)
-            cache.set(cache_key, queryset, timeout=3600)  # Cache for 1 hour
-            return queryset
-        
-        logger.info(f"Products retrieved from cache for category: {self.request.query_params.get('category', 'all')}")
-        return cached_products
+        # cache_key = f'products_{self.request.query_params.get("category", "all")}'
+        # cached_products = cache.get(cache_key)
+        #
+        # if cached_products is None:
+        #     logger.info(f"Products cache miss for category: {self.request.query_params.get('category', 'all')}")
+        #     queryset = Product.objects.all()
+        #     category = self.request.query_params.get('category')
+        #     if category:
+        #         queryset = queryset.filter(category__name=category)
+        #     cache.set(cache_key, queryset, timeout=3600)  # Cache for 1 hour
+        #     return queryset
+        #
+        # logger.info(f"Products retrieved from cache for category: {self.request.query_params.get('category', 'all')}")
+        # return cached_products
+        queryset = Product.objects.all()
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category__name=category)
+        return queryset
 
     def perform_create(self, serializer):
         logger.info(f"Creating new product: {serializer.validated_data.get('name')}")
@@ -116,17 +121,19 @@ class CategoryViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
 
     def get_queryset(self):
-        cache_key = 'all_categories'
-        cached_categories = cache.get(cache_key)
-        
-        if cached_categories is None:
-            logger.info("Categories cache miss - fetching from database")
-            categories = Category.objects.all()
-            cache.set(cache_key, categories, timeout=3600)  # Cache for 1 hour
-            return categories
-        
-        logger.info("Categories retrieved from cache")
-        return cached_categories
+        # cache_key = 'all_categories'
+        # cached_categories = cache.get(cache_key)
+        #
+        # if cached_categories is None:
+        #     logger.info("Categories cache miss - fetching from database")
+        #     categories = Category.objects.all()
+        #     cache.set(cache_key, categories, timeout=3600)  # Cache for 1 hour
+        #     return categories
+        #
+        # logger.info("Categories retrieved from cache")
+        # return cached_categories
+        categories = Category.objects.all()
+        return categories
 
     def perform_create(self, serializer):
         logger.info(f"Creating new category: {serializer.validated_data.get('name')}")
