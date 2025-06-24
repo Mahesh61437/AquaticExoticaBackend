@@ -62,7 +62,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'aquaticexotica_backend.middleware.camelcase_middleware.CamelSnakeCaseMiddleware',
+    'aquaticexotica_backend.middleware.camelsnakecase_middleware.CamelSnakeCaseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
