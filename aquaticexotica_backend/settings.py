@@ -33,8 +33,15 @@ DJANGO_ENV = os.getenv('DJANGO_ENV', default='PRODUCTION')
 DEBUG = DJANGO_ENV in ['LOCAL', 'STAGING']
 
 
-ALLOWED_HOSTS = ['web-production-d97bb.up.railway.app', '127.0.0.1']
+ALLOWED_HOSTS = [
+    '*.up.railway.app',
+    'localhost',
+    '127.0.0.1',
+]
 
+# Add Railway's provided domain if available
+if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
+    ALLOWED_HOSTS.append(os.environ.get('RAILWAY_PUBLIC_DOMAIN'))
 
 # Application definition
 
@@ -336,7 +343,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Remove APPEND_SLASH=False as it might cause issues with DRF
-APPEND_SLASH=False
+# APPEND_SLASH=False
 
 # Logging Configuration
 LOGGING = {
