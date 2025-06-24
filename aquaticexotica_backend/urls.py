@@ -32,7 +32,7 @@ def health_plain(request):
     return HttpResponse("OK")
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
+    path("admin", admin.site.urls),
 
     # Core API routes
     path("api/", include("core.urls")),
@@ -41,7 +41,7 @@ urlpatterns = [
     path("api/auth/", include("authapp.urls")),
 
     # Health checks
-    path("api/health/", api_health),
-    path("health/", api_health),
+    path("api/health", api_health),
+    path("health", api_health),
     path("healthz", health_plain),
 ]
