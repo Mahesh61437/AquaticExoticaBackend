@@ -14,5 +14,6 @@ class OptionalJWTAuthenticationMiddleware(MiddlewareMixin):
             #     request.user = AnonymousUser()
         except Exception:
             # request.user = AnonymousUser()
+            # TODO: Fix the auth logic
             pass
 
