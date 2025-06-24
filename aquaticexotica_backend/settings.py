@@ -106,11 +106,11 @@ WSGI_APPLICATION = 'aquaticexotica_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', default='localhost'),
-        'PORT': os.getenv('DB_PORT', default='5432'),
+        'NAME': "aquaticexotica",
+        'USER': "neondb_owner",
+        'PASSWORD': "npg_n2TO4prGlvCx",
+        'HOST': "ep-shrill-lake-a1e9dvdn-pooler.ap-southeast-1.aws.neon.tech",
+        'PORT': "5432",
     }
 }
 
