@@ -1,0 +1,245 @@
+INFO 2025-06-07 22:35:42,203 autoreload 96427 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:37:11,253 autoreload 96427 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/models.py changed, reloading.
+INFO 2025-06-07 22:37:11,524 autoreload 96472 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:43:11,766 autoreload 96472 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/models.py changed, reloading.
+INFO 2025-06-07 22:43:12,079 autoreload 96597 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:43:19,153 autoreload 96617 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:43:31,447 autoreload 96617 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/models.py changed, reloading.
+INFO 2025-06-07 22:43:31,694 autoreload 96628 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:43:56,316 autoreload 96628 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/models.py changed, reloading.
+INFO 2025-06-07 22:43:56,594 autoreload 96642 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:44:49,855 autoreload 96642 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/models.py changed, reloading.
+INFO 2025-06-07 22:44:50,142 autoreload 96665 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:45:04,456 autoreload 96665 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/serializers.py changed, reloading.
+INFO 2025-06-07 22:45:04,692 autoreload 96681 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:47:01,461 autoreload 96681 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/models.py changed, reloading.
+INFO 2025-06-07 22:47:01,754 autoreload 96717 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:51:04,669 autoreload 96717 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/serializers.py changed, reloading.
+INFO 2025-06-07 22:51:04,965 autoreload 96783 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:52:04,439 autoreload 96783 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/serializers.py changed, reloading.
+INFO 2025-06-07 22:52:04,724 autoreload 96820 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:56:22,244 autoreload 96820 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/serializers.py changed, reloading.
+INFO 2025-06-07 22:56:22,545 autoreload 96869 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 22:58:43,222 autoreload 96869 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/views.py changed, reloading.
+INFO 2025-06-07 22:58:43,480 autoreload 96905 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 23:00:43,609 autoreload 96905 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/views.py changed, reloading.
+INFO 2025-06-07 23:00:43,848 autoreload 96931 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 23:01:04,403 autoreload 96931 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/urls.py changed, reloading.
+INFO 2025-06-07 23:01:04,662 autoreload 96941 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 23:01:47,790 autoreload 96941 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/admin.py changed, reloading.
+INFO 2025-06-07 23:01:48,043 autoreload 96957 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 23:02:13,769 autoreload 96957 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/admin.py changed, reloading.
+INFO 2025-06-07 23:02:14,039 autoreload 96976 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 23:02:20,154 autoreload 96989 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 23:04:23,638 autoreload 96989 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/admin.py changed, reloading.
+INFO 2025-06-07 23:04:23,899 autoreload 97022 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 23:05:36,807 autoreload 97022 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/admin.py changed, reloading.
+INFO 2025-06-07 23:05:37,090 autoreload 97040 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-07 23:06:01,248 autoreload 97066 8723368000 Watching for file changes with StatReloader
+ERROR 2025-06-07 23:06:18,559 log 97066 6160232448 Internal Server Error: /admin/core/cart/add/
+Traceback (most recent call last):
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column "created_at" of relation "core_cart" does not exist
+LINE 1: INSERT INTO "core_cart" ("user_id", "created_at", "updated_a...
+                                            ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/contrib/admin/options.py", line 719, in wrapper
+    return self.admin_site.admin_view(view)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/views/decorators/cache.py", line 80, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/contrib/admin/sites.py", line 246, in inner
+    return view(request, *args, **kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1984, in add_view
+    return self.changeform_view(request, None, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/utils/decorators.py", line 48, in _wrapper
+    return bound_method(*args, **kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/utils/decorators.py", line 192, in _view_wrapper
+    result = _process_exception(request, e)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/utils/decorators.py", line 190, in _view_wrapper
+    response = view_func(request, *args, **kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1843, in changeform_view
+    return self._changeform_view(request, object_id, form_url, extra_context)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1894, in _changeform_view
+    self.save_model(request, new_object, form, not add)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/contrib/admin/options.py", line 1314, in save_model
+    obj.save()
+    ~~~~~~~~^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/base.py", line 902, in save
+    self.save_base(
+    ~~~~~~~~~~~~~~^
+        using=using,
+        ^^^^^^^^^^^^
+    ...<2 lines>...
+        update_fields=update_fields,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/base.py", line 1008, in save_base
+    updated = self._save_table(
+        raw,
+    ...<4 lines>...
+        update_fields,
+    )
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/base.py", line 1169, in _save_table
+    results = self._do_insert(
+        cls._base_manager, using, fields, returning_fields, raw
+    )
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/base.py", line 1210, in _do_insert
+    return manager._insert(
+           ~~~~~~~~~~~~~~~^
+        [self],
+        ^^^^^^^
+    ...<3 lines>...
+        raw=raw,
+        ^^^^^^^^
+    )
+    ^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/manager.py", line 87, in manager_method
+    return getattr(self.get_queryset(), name)(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/query.py", line 1868, in _insert
+    return query.get_compiler(using=using).execute_sql(returning_fields)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/sql/compiler.py", line 1882, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column "created_at" of relation "core_cart" does not exist
+LINE 1: INSERT INTO "core_cart" ("user_id", "created_at", "updated_a...
+                                            ^
+
+INFO 2025-06-07 23:06:39,493 autoreload 97066 8723368000 /Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/models.py changed, reloading.
+INFO 2025-06-07 23:06:39,744 autoreload 97090 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-24 10:18:10,006 autoreload 24673 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-24 10:19:00,890 views 24673 6191067136 Categories cache miss - fetching from database
+ERROR 2025-06-24 10:19:00,940 log 24673 6191067136 Internal Server Error: /api/categories/
+Traceback (most recent call last):
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column core_category.updated_at does not exist
+LINE 1: ...egory"."image_url", "core_category"."created_at", "core_cate...
+                                                             ^
+HINT:  Perhaps you meant to reference the column "core_category.created_at".
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/rest_framework/viewsets.py", line 125, in view
+    return self.dispatch(request, *args, **kwargs)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/rest_framework/views.py", line 515, in dispatch
+    response = self.handle_exception(exc)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/rest_framework/views.py", line 475, in handle_exception
+    self.raise_uncaught_exception(exc)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/rest_framework/views.py", line 486, in raise_uncaught_exception
+    raise exc
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/rest_framework/views.py", line 512, in dispatch
+    response = handler(request, *args, **kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/rest_framework/mixins.py", line 38, in list
+    queryset = self.filter_queryset(self.get_queryset())
+                                    ~~~~~~~~~~~~~~~~~^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/core/views.py", line 125, in get_queryset
+    cache.set(cache_key, categories, timeout=3600)  # Cache for 1 hour
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django_redis/cache.py", line 29, in _decorator
+    return method(self, *args, **kwargs)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django_redis/cache.py", line 81, in set
+    return self.client.set(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django_redis/client/default.py", line 143, in set
+    nvalue = self.encode(value)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django_redis/client/default.py", line 461, in encode
+    value = self._serializer.dumps(value)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django_redis/serializers/pickle.py", line 29, in dumps
+    return pickle.dumps(value, self._pickle_version)
+           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/query.py", line 337, in __getstate__
+    self._fetch_all()
+    ~~~~~~~~~~~~~~~^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/query.py", line 1949, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+        chunked_fetch=self.chunked_fetch, chunk_size=self.chunk_size
+    )
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+    cursor.execute(sql, params)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 122, in execute
+    return super().execute(sql, params)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        sql, params, many=False, executor=self._execute
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/Users/mahesh/Desktop/PythonProject/aquaticexotica_backend/.venv/lib/python3.13/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column core_category.updated_at does not exist
+LINE 1: ...egory"."image_url", "core_category"."created_at", "core_cate...
+                                                             ^
+HINT:  Perhaps you meant to reference the column "core_category.created_at".
+
+INFO 2025-06-24 10:23:25,717 autoreload 24863 8723368000 Watching for file changes with StatReloader
+INFO 2025-06-24 10:23:28,535 views 24863 6130118656 Categories cache miss - fetching from database
+INFO 2025-06-24 10:25:06,782 views 24863 6146945024 Signup attempt for username: mahesh61437mahe@gmail.com
+WARNING 2025-06-24 10:25:06,801 views 24863 6146945024 Signup failed: Username already exists: mahesh61437mahe@gmail.com
+INFO 2025-06-24 10:25:24,362 views 24863 6146945024 Signin attempt for username: mahesh61437mahe@gmail.com
+INFO 2025-06-24 10:25:24,766 views 24863 6146945024 User signed in successfully: mahesh61437mahe@gmail.com
