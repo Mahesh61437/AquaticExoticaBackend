@@ -100,18 +100,18 @@ class ProductViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         logger.info(f"Creating new product: {serializer.validated_data.get('name')}")
         product = serializer.save()
-        cache.delete_pattern('products_*')
+        # cache.delete_pattern('products_*')
         return product
 
     def perform_update(self, serializer):
         logger.info(f"Updating product: {serializer.instance.name}")
         product = serializer.save()
-        cache.delete_pattern('products_*')
+        # cache.delete_pattern('products_*')
         return product
 
     def perform_destroy(self, instance):
         logger.info(f"Deleting product: {instance.name}")
-        cache.delete_pattern('products_*')
+        # cache.delete_pattern('products_*')
         instance.delete()
 
 
@@ -138,18 +138,18 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         logger.info(f"Creating new category: {serializer.validated_data.get('name')}")
         category = serializer.save()
-        cache.delete('all_categories')
+        # cache.delete('all_categories')
         return category
 
     def perform_update(self, serializer):
         logger.info(f"Updating category: {serializer.instance.name}")
         category = serializer.save()
-        cache.delete('all_categories')
+        # cache.delete('all_categories')
         return category
 
     def perform_destroy(self, instance):
         logger.info(f"Deleting category: {instance.name}")
-        cache.delete('all_categories')
+        # cache.delete('all_categories')
         instance.delete()
 
 

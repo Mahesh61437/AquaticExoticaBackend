@@ -76,14 +76,14 @@ class CategoryAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         logger.info(f"Admin {request.user.username} {'updated' if change else 'created'} category: {obj.name}")
         super().save_model(request, obj, form, change)
-        cache.delete('all_categories')
-        cache.delete_pattern('products_*')
+        # cache.delete('all_categories')
+        # cache.delete_pattern('products_*')
 
     def delete_model(self, request, obj):
         logger.info(f"Admin {request.user.username} deleted category: {obj.name}")
         super().delete_model(request, obj)
-        cache.delete('all_categories')
-        cache.delete_pattern('products_*')
+        # cache.delete('all_categories')
+        # cache.delete_pattern('products_*')
 
 
 @admin.register(Product)
@@ -109,12 +109,12 @@ class ProductAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         logger.info(f"{'Updating' if change else 'Creating'} product: {obj.name}")
         super().save_model(request, obj, form, change)
-        cache.delete_pattern('products_*')
+        # cache.delete_pattern('products_*')
 
     def delete_model(self, request, obj):
         logger.info(f"Deleting product: {obj.name}")
         super().delete_model(request, obj)
-        cache.delete_pattern('products_*')
+        # cache.delete_pattern('products_*')
 
 
 class CartItemInline(admin.TabularInline):
