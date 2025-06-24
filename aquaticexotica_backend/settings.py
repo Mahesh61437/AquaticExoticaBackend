@@ -33,7 +33,7 @@ DJANGO_ENV = os.getenv('DJANGO_ENV', default='PRODUCTION')
 DEBUG = DJANGO_ENV in ['LOCAL', 'STAGING']
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['web-production-d97bb.up.railway.app', '127.0.0.1']
 
 
 # Application definition
