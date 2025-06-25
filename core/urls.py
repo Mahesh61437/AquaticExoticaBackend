@@ -4,7 +4,7 @@ from rest_framework.routers import SimpleRouter
 from .views import (
     ProductViewSet, CategoryViewSet, OrderViewSet,
     ContactView, StockNotificationSubscribeView,
-    StockNotificationNotifyView
+    StockNotificationNotifyView, UserAdminViewSet
 )
 
 
@@ -34,7 +34,8 @@ class OptionalSlashRouter(SimpleRouter):
         return urls
 
 
-router = SimpleRouter(trailing_slash=False)
+router = OptionalSlashRouter()
+router.register(r'users', UserAdminViewSet, basename='user')
 router.register(r'products', ProductViewSet, basename='product')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'orders', OrderViewSet, basename='order')

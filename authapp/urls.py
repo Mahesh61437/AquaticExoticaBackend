@@ -1,8 +1,6 @@
-from django.urls import path, include
-from rest_framework.routers import SimpleRouter
+from django.urls import path
 
 from .views import (
-    UserAdminViewSet,
     SignupView,
     SigninView,
     LogoutView,
@@ -12,12 +10,7 @@ from .views import (
     CreateFirstAdminView,
 )
 
-
-router = SimpleRouter(trailing_slash=False)
-router.register(r'users', UserAdminViewSet, basename='user')
-
 urlpatterns = [
-    path('', include(router.urls)),
     path('signup', SignupView.as_view(), name='signup'),
     path('login', SigninView.as_view(), name='login'),
     path('logout', LogoutView.as_view(), name='logout'),

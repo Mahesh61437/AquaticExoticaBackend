@@ -9,6 +9,8 @@ User = get_user_model()
 
 
 class UserSerializer(serializers.ModelSerializer):
+    is_admin = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -18,10 +20,13 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "phone",
-            "is_staff",
+            "is_admin",  # replacing is_staff
             "date_joined",
         )
-        read_only_fields = ("id", "is_staff", "date_joined")
+        read_only_fields = ("id", "is_admin", "date_joined")
+
+    def get_is_admin(self, obj):
+        return obj.is_staff
 
 
 class CategorySerializer(serializers.ModelSerializer):

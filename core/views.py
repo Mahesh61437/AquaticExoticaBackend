@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.contrib.auth import get_user_model
 from django.db import models
 from rest_framework import viewsets, filters, generics, status
 from rest_framework.decorators import action
@@ -6,15 +7,36 @@ from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.core.mail import send_mail
-from django.core.cache import cache
-from django.conf import settings
 import logging
 
-from .models import Product, Category, Order, OrderItem, StockNotification, ProductImage, Cart, CartItem, ShippingAddress
 from .serializers import *
 from .permissions import IsAdminOrReadOnly
 
 logger = logging.getLogger('core')
+
+
+User = get_user_model()
+
+class UserAdminViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    @action(detail=True, methods=['post'], url_path='make-admin')
+    def make_admin(self, request, pk=None):
+        user = self.get_object()
+        user.is_staff = True
+        user.save()
+        return Response({'detail': f'User {user.username} is now an admin.'}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], url_path='revoke-admin')
+    def revoke_admin(self, request, pk=None):
+        user = self.get_object()
+        if user == request.user:
+            return Response({'detail': 'You cannot revoke your own admin access.'}, status=status.HTTP_400_BAD_REQUEST)
+        user.is_staff = False
+        user.save()
+        return Response({'detail': f'Admin rights revoked for {user.username}.'}, status=status.HTTP_200_OK)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
