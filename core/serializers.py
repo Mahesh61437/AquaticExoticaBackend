@@ -63,6 +63,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_featured",
             "is_trending",
             "is_in_stock",
+            "image_url",
             "images"
         )
         read_only_fields = ("id", "discount_percentage", "is_in_stock")

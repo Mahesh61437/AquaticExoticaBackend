@@ -80,6 +80,7 @@ class Product(models.Model):
     name = models.TextField()
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    image_url = models.URLField(blank=True, null=True)
     compare_at_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True,
         help_text="Original price before discount"

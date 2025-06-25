@@ -58,7 +58,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="category/(?P<slug>[^/.]+)")
     def category(self, request, slug=None):
-        qs = self.get_queryset().filter(category__iexact=slug)
+        qs = self.get_queryset().filter(category__slug__iexact=slug)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
