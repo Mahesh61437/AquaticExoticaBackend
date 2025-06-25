@@ -34,7 +34,7 @@ class OptionalSlashRouter(SimpleRouter):
         return urls
 
 
-router = OptionalSlashRouter()
+router = SimpleRouter(trailing_slash=False)
 router.register(r'products', ProductViewSet, basename='product')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'orders', OrderViewSet, basename='order')
