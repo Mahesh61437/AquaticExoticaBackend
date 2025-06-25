@@ -1,2 +1,11 @@
 /.env
 /.DS_Store
+core/migrations/__pycache__/*
+# Ignore macOS metadata files
+.DS_Store
+**/.DS_Store
+
+# Ignore Python bytecode cache directories
+__pycache__/
+**/__pycache__/
+dev.env

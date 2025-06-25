@@ -84,7 +84,7 @@ class Product(models.Model):
         max_digits=10, decimal_places=2, blank=True, null=True,
         help_text="Original price before discount"
     )
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True)
     tags = models.CharField(max_length=255, help_text="Comma-separated tags")
     rating = models.DecimalField(
         max_digits=3, decimal_places=1,
