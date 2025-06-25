@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.db import models
 from rest_framework import viewsets, filters, generics, status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.core.mail import send_mail
@@ -119,6 +119,11 @@ class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAdminOrReadOnly]
+
+    def get_permissions(self):
+        if self.request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return [AllowAny()]
+        return [IsAdminUser()]
 
     def get_queryset(self):
         # cache_key = 'all_categories'
