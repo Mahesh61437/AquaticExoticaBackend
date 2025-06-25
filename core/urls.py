@@ -9,18 +9,17 @@ from .views import (
 
 
 class OptionalSlashRouter(SimpleRouter):
-    def __init__(self, *args, **kwargs):
-        self.trailing_slash = '/?'  # Use this for generating regex
-        super().__init__(*args, **kwargs)
+    def __init__(self):
+        super().__init__()
+        self.trailing_slash = '/?'  # regex-style optional slash
 
     def get_urls(self):
-        # Override to use re_path with optional trailing slash
-        ret = []
-        routes = self.get_routes(None)  # We pass None because we patch it later in the loop
-
+        urls = []
         for prefix, viewset, basename in self.registry:
             lookup = self.get_lookup_regex(viewset)
-            for route in self.get_routes(viewset):
+            routes = self.get_routes(viewset)
+
+            for route in routes:
                 mapping = self.get_method_map(viewset, route.mapping)
                 if not mapping:
                     continue
@@ -31,8 +30,8 @@ class OptionalSlashRouter(SimpleRouter):
                 )
                 view = viewset.as_view(mapping, **route.initkwargs)
                 name = route.name.format(basename=basename)
-                ret.append(re_path(regex, view, name=name))
-        return ret
+                urls.append(re_path(f'^{regex}$', view, name=name))
+        return urls
 
 
 router = OptionalSlashRouter()
