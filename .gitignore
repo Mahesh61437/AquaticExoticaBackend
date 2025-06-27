@@ -9,4 +9,3 @@ core/migrations/__pycache__/*
 __pycache__/
 **/__pycache__/
 dev.env
-logs

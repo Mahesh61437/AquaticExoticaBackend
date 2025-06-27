@@ -142,11 +142,14 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(), write_only=True
+    )
     total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ("id", "product", "quantity", "price", "total_price")
+        fields = ("id", "product", "product_id", "quantity", "price", "total_price")
         read_only_fields = ("id", "total_price")
 
     def get_total_price(self, obj):
@@ -218,12 +221,17 @@ class OrderSerializer(serializers.ModelSerializer):
         order = Order.objects.create(
             user=user,
             shipping_address=shipping_address,
-            shipping_cost=shipping_cost
+            shipping_cost=shipping_cost,
+            total_amount=0
         )
 
         total = 0
         for item in items_data:
-            product_id = item["product_id"]
+
+            # DRF's PrimaryKeyRelatedField resolves "product_id" to a Product instance,
+            # so item["product_id"] is not just an ID, but the actual Product object.
+            # Hence, we assign it to 'product' and use it directly when creating the OrderItem.
+            product = item["product_id"]
             quantity = item["quantity"]
             price = float(item["price"])
 
@@ -231,7 +239,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
             OrderItem.objects.create(
                 order=order,
-                product_id=product_id,
+                product=product,
                 quantity=quantity,
                 price=price
             )
