@@ -218,7 +218,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     def my_orders(self, request):
         queryset = self.get_queryset().filter(user=request.user)
         serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, safe=False)
+        return Response(serializer.data)
 
     @action(detail=True, methods=["patch"], permission_classes=[IsAuthenticated, IsAdminOrReadOnly])
     def update_status(self, request, pk=None):
@@ -229,7 +229,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.status = status_value
         order.save()
         serializer = self.get_serializer(order)
-        return Response(serializer.data, safe=False)
+        return Response(serializer.data)
 
 
 class ContactView(APIView):

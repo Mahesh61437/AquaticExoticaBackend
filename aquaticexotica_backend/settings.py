@@ -13,6 +13,8 @@ from datetime import timedelta
 from pathlib import Path
 import os
 from urllib.parse import urlparse
+from decouple import config
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +28,7 @@ SECRET_KEY = 'django-insecure-ru7+g6&&c!!o6j%=2#e0cezt62nu##35#$@hhfa81d65d8rg8n
 
 
 # Environment type: local, staging, or production
-DJANGO_ENV = os.getenv('DJANGO_ENV', default='PRODUCTION')
+DJANGO_ENV = config('DJANGO_ENV', default='PRODUCTION')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = DJANGO_ENV in ['LOCAL', 'STAGING']
@@ -106,11 +108,11 @@ WSGI_APPLICATION = 'aquaticexotica_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv("DB_NAME"),
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv("DB_PASSWORD"),
-        'HOST': os.getenv("DB_HOST"),
-        'PORT': os.getenv("DB_PORT"),
+        'NAME': config("DB_NAME"),
+        'USER': config("DB_USER"),
+        'PASSWORD': config("DB_PASSWORD"),
+        'HOST': config("DB_HOST"),
+        'PORT': config("DB_PORT"),
     }
 }
 
@@ -187,7 +189,7 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-REDIS_URL = os.getenv('REDIS_URL')
+REDIS_URL = config('REDIS_URL')
 
 # Parse Redis URL
 redis_url = urlparse(REDIS_URL)
@@ -450,4 +452,4 @@ if not os.path.exists(LOGS_DIR):
 
 
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+SENDGRID_API_KEY = config("SENDGRID_API_KEY")
