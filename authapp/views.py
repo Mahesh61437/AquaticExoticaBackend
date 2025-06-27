@@ -17,7 +17,7 @@ class SignupView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get('username') or request.data.get('email')
+        username = request.data.get('email')
         password = request.data.get('password')
         full_name = request.data.get('fullName') or request.data.get('full_name')
         first_name, last_name = full_name.split() if full_name and len(full_name.split()) > 1 else (full_name, '')
@@ -33,7 +33,7 @@ class SignupView(APIView):
             return JsonResponse({'message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            user = User.objects.create_user(username=username, password=password,
+            user = User.objects.create_user(username=username, password=password, email=username,
                                           first_name=first_name or '', last_name=last_name or '')
             logger.info(f"User created successfully: {username}")
             return JsonResponse({'message': 'Account created successfully. Please sign in.'}, status=status.HTTP_201_CREATED)
@@ -60,7 +60,8 @@ class SigninView(APIView):
                 'access': str(refresh.access_token),
                 'isAdmin': user.is_staff,
                 'username': user.username,
-                'email': user.email,
+                'email': user.email if user.email is not None else user.username,
+                'full_name': user.full_name,
                 'id': user.id,
             })
         logger.warning(f"Signin failed: Invalid credentials for username: {username}")
@@ -89,9 +90,10 @@ class MeView(APIView):
         data = {
             'id': user.id,
             'username': user.username,
-            'email': user.email,
+            'email': user.email if user.email is not None else user.username,
             'first_name': user.first_name,
             'last_name': user.last_name,
+            'full_name': user.full_name,
             'isAdmin': user.is_staff,
         }
         return JsonResponse(data)

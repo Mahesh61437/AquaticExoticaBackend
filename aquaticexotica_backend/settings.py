@@ -450,3 +450,7 @@ LOGGING = {
 LOGS_DIR = os.path.join(BASE_DIR, 'logs')
 if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR)
+
+
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+SENDGRID_API_KEY = "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"

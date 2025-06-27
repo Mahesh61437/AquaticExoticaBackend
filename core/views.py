@@ -6,7 +6,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 import logging
 
 from .models import (Product, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag)
@@ -81,6 +81,32 @@ class ProductViewSet(viewsets.ModelViewSet):
     def category(self, request, slug=None):
         qs = self.get_queryset().filter(category__slug__iexact=slug)
         serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["get"], url_path="related")
+    def related_products(self, request, pk=None):
+        product = self.get_object()
+
+        # Step 1: Start with same category
+        related = self.get_queryset().filter(
+            category=product.category
+        ).exclude(id=product.id)
+
+        # Collect into a list first (for deduplication)
+        related_products = list(related.distinct()[:5])
+        related_ids = {p.id for p in related_products}
+
+        # Step 2: If fewer than 5, fill with tag-matching products
+        if len(related_products) < 5 and product.tags.exists():
+            tag_related = Product.objects.filter(
+                tags__in=product.tags.all()
+            ).exclude(id__in=related_ids | {product.id}).distinct()
+
+            needed = 5 - len(related_products)
+            related_products += list(tag_related[:needed])
+
+        # Serialize and return
+        serializer = self.get_serializer(related_products, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="search")
@@ -188,7 +214,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             return qs  # Admin sees all orders
         return qs.filter(user=user)  # Regular users see only their orders
 
-    @action(detail=False, methods=["get"], url_path="my-orders")
+    @action(detail=False, methods=["get"], url_path="myorders")
     def my_orders(self, request):
         queryset = self.get_queryset().filter(user=request.user)
         serializer = self.get_serializer(queryset, many=True)
@@ -224,15 +250,17 @@ class ContactView(APIView):
 
         try:
             # send_mail requires EMAIL_BACKEND configured in settings
-            send_mail(
-                subject=f"Contact form: {subject}",
-                message=f"From: {name} <{email}>\n\n{message}",
-                from_email=None,  # Use default from settings
-                recipient_list=["support@aquaticexotica.com"],
+            msg = EmailMessage(
+                from_email='mahesh@aquaticexotica.com',
+                to=['mahesh@aquaticexotica.com'],
             )
+            msg.template_id = "d-89d8f92ee9ed4c6592b3b8b83c975262"
+            msg.dynamic_template_data = request.data
+            msg.send(fail_silently=False)
+
             return Response({"message": "Thank you! Your message has been sent successfully."})
         except Exception as exc:
-            return Response({"message": "Failed to send your message.", "error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"message": "Failed to send your message.", "error": str(exc)}, status=status.HTTP_200_OK)
 
 
 class StockNotificationSubscribeView(APIView):
