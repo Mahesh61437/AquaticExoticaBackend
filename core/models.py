@@ -22,6 +22,14 @@ class User(AbstractUser):
         return f"{self.first_name} {self.last_name} ({self.email})"
 
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
 class ShippingAddress(models.Model):
     """User shipping addresses - users can have multiple addresses"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipping_addresses')
@@ -86,7 +94,7 @@ class Product(models.Model):
         help_text="Original price before discount"
     )
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True)
-    tags = models.CharField(max_length=255, help_text="Comma-separated tags")
+    # tags = models.CharField(max_length=255, help_text="Comma-separated tags")
     rating = models.DecimalField(
         max_digits=3, decimal_places=1,
         validators=[MinValueValidator(0), MaxValueValidator(5)],
@@ -100,6 +108,8 @@ class Product(models.Model):
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    tags = models.ManyToManyField('Tag', related_name='products', blank=True)
 
     class Meta:
         ordering = ['-created_at']

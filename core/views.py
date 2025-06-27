@@ -1,18 +1,19 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.db import models
 from rest_framework import viewsets, filters, generics, status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
 from django.http import JsonResponse
 from rest_framework.views import APIView
 from django.core.mail import send_mail
 import logging
 
-from .models import (Product, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification)
-from .permissions import IsAdminOrReadOnly
+from .models import (Product, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag)
+from .permissions import IsAdminOrReadOnly, RoleBasedSafeWritePermission
 from .serializers import (UserSerializer, ProductSerializer, OrderSerializer, CategorySerializer, CartSerializer,
-                          CartItemSerializer, OrderItemSerializer, ShippingAddressSerializer, StockNotificationSerializer)
+                          CartItemSerializer, OrderItemSerializer, ShippingAddressSerializer,
+                          StockNotificationSerializer, TagSerializer)
 
 logger = logging.getLogger('core')
 
@@ -22,18 +23,20 @@ User = get_user_model()
 class UserAdminViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [RoleBasedSafeWritePermission]
 
-    @action(detail=True, methods=['post'], url_path='make-admin')
-    def make_admin(self, request, pk=None):
-        user = self.get_object()
+    @action(detail=False, methods=['post'], url_path='make-admin')
+    def make_admin(self, request):
+        user_id = request.data.get("user_id")
+        user = get_object_or_404(User, pk=user_id)
         user.is_staff = True
         user.save()
         return JsonResponse({'detail': f'User {user.username} is now an admin.'}, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=['post'], url_path='revoke-admin')
-    def revoke_admin(self, request, pk=None):
-        user = self.get_object()
+    @action(detail=False, methods=['post'], url_path='revoke-admin')
+    def revoke_admin(self, request):
+        user_id = request.data.get("user_id")
+        user = get_object_or_404(User, pk=user_id)
         if user == request.user:
             return JsonResponse({'detail': 'You cannot revoke your own admin access.'}, status=status.HTTP_400_BAD_REQUEST)
         user.is_staff = False
@@ -46,15 +49,9 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [RoleBasedSafeWritePermission]
     filter_backends = [filters.SearchFilter]
     search_fields = ["name", "description", "category", "tags"]
-
-    # Public endpoints (no auth required)
-    def get_permissions(self):
-        if self.action in ["list", "retrieve", "featured", "trending", "new", "sale", "category", "search"]:
-            return [AllowAny()]
-        return super().get_permissions()
 
     @action(detail=False, methods=["get"], url_path="featured")
     def featured(self, request):
@@ -142,12 +139,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly]
-
-    def get_permissions(self):
-        if self.request.method in ['GET', 'HEAD', 'OPTIONS']:
-            return [AllowAny()]
-        return [IsAdminUser()]
+    permission_classes = [RoleBasedSafeWritePermission]
 
     def get_queryset(self):
         # cache_key = 'all_categories'
@@ -182,26 +174,26 @@ class CategoryViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 
-class OrderViewSet(viewsets.GenericViewSet, generics.CreateAPIView, generics.RetrieveAPIView, generics.ListAPIView):
+class OrderViewSet(viewsets.ModelViewSet):
     """Customer and admin order endpoints."""
 
     queryset = Order.objects.prefetch_related("items", "items__product").all()
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [RoleBasedSafeWritePermission]
 
     def get_queryset(self):
         logger.info(f"Fetching orders for user: {self.request.user.username}")
         qs = super().get_queryset()
         user = self.request.user
         if user.is_staff:
-            return qs  # Admin can see all orders
-        return qs.filter(user=user)  # Regular user can only see their own orders
+            return qs  # Admin sees all orders
+        return qs.filter(user=user)  # Regular users see only their orders
 
-    # Map Express routes to DRF actions
     @action(detail=False, methods=["get"], url_path="my-orders")
     def my_orders(self, request):
-        serializer = self.get_serializer(self.get_queryset(), many=True)
-        return JsonResponse(serializer.data)
+        queryset = self.get_queryset().filter(user=request.user)
+        serializer = self.get_serializer(queryset, many=True)
+        return JsonResponse(serializer.data, safe=False)
 
     @action(detail=True, methods=["patch"], permission_classes=[IsAuthenticated, IsAdminOrReadOnly])
     def update_status(self, request, pk=None):
@@ -212,7 +204,7 @@ class OrderViewSet(viewsets.GenericViewSet, generics.CreateAPIView, generics.Ret
         order.status = status_value
         order.save()
         serializer = self.get_serializer(order)
-        return JsonResponse(serializer.data)
+        return JsonResponse(serializer.data, safe=False)
 
 
 class ContactView(APIView):
@@ -363,3 +355,9 @@ class StockNotificationViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         logger.info(f"Creating stock notification for user: {self.request.user.username}")
         return serializer.save(user=self.request.user)
+
+
+class TagViewSet(viewsets.ModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    permission_classes = [RoleBasedSafeWritePermission]

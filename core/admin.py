@@ -86,14 +86,19 @@ class CategoryAdmin(admin.ModelAdmin):
         # cache.delete_pattern('products_*')
 
 
+class ProductTagInline(admin.TabularInline):
+    model = Product.tags.through
+
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'price', 'stock', 'is_active', 'is_new', 'is_sale', 'is_featured', 'is_trending')
     list_filter = ('is_active', 'is_new', 'is_sale', 'is_featured', 'is_trending', 'category')
     search_fields = ('name', 'description', 'tags')
-    inlines = [ProductImageInline]
+    inlines = [ProductImageInline, ProductTagInline]
     raw_id_fields = ('category',)
     readonly_fields = ('created_at', 'updated_at')
+    filter_horizontal = ('tags',)
     fieldsets = (
         ('Basic Information', {
             'fields': ('name', 'description', 'category', 'tags')

@@ -4,7 +4,7 @@ from rest_framework.routers import SimpleRouter
 from .views import (
     ProductViewSet, CategoryViewSet, OrderViewSet,
     ContactView, StockNotificationSubscribeView,
-    StockNotificationNotifyView, UserAdminViewSet
+    StockNotificationNotifyView, UserAdminViewSet, TagViewSet, ShippingAddressViewSet
 )
 
 
@@ -39,6 +39,8 @@ router.register(r'users', UserAdminViewSet, basename='user')
 router.register(r'products', ProductViewSet, basename='product')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'orders', OrderViewSet, basename='order')
+router.register(r'tags', TagViewSet, basename='tag')
+router.register(r'shippingaddress', ShippingAddressViewSet, basename='shippingaddress')
 
 urlpatterns = [
     path('', include(router.urls)),

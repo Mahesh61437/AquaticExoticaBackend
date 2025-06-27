@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     Product, Category, ShippingAddress, Order, OrderItem,
-    ProductImage, Cart, CartItem, StockNotification
+    ProductImage, Cart, CartItem, StockNotification, Tag
 )
 
 User = get_user_model()
@@ -29,6 +29,13 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.is_staff
 
 
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['id', 'name', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
@@ -49,6 +56,12 @@ class ProductSerializer(serializers.ModelSerializer):
     discount_percentage = serializers.SerializerMethodField()
     is_in_stock = serializers.BooleanField(read_only=True)
 
+    tags = serializers.PrimaryKeyRelatedField(
+        many=True, queryset=Tag.objects.all()
+    )
+    tag_details = TagSerializer(source='tags', many=True, read_only=True)
+
+
     class Meta:
         model = Product
         fields = (
@@ -60,7 +73,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "discount_percentage",
             "stock",
             "category",
-            "tags",
+            'tags', 'tag_details',
             "rating",
             "is_active",
             "is_new",
@@ -77,6 +90,20 @@ class ProductSerializer(serializers.ModelSerializer):
         if obj.compare_at_price and obj.price < obj.compare_at_price:
             return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
         return 0
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop("tags", None)
+
+        # Update all regular fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Replace tags (remove old ones, set new ones)
+        if tags is not None:
+            instance.tags.set(tags)
+
+        return instance
 
     def to_representation(self, instance):
         """
@@ -131,23 +158,98 @@ class OrderSerializer(serializers.ModelSerializer):
     shipping_address = ShippingAddressSerializer(read_only=True)
     grand_total = serializers.SerializerMethodField()
 
+    # Writable fields
+    shipping_address_id = serializers.PrimaryKeyRelatedField(
+        queryset=ShippingAddress.objects.all(), write_only=True, required=False
+    )
+    item_data = serializers.ListField(write_only=True)
+
+    # Optional fields to create a new address
+    address_line_1 = serializers.CharField(write_only=True, required=False)
+    address_line_2 = serializers.CharField(write_only=True, required=False)
+    city = serializers.CharField(write_only=True, required=False)
+    state = serializers.CharField(write_only=True, required=False)
+    zip_code = serializers.CharField(write_only=True, required=False)
+    country = serializers.CharField(write_only=True, required=False)
+    recipient_name = serializers.CharField(write_only=True, required=False)
+    recipient_phone = serializers.CharField(write_only=True, required=False)
+    is_default = serializers.BooleanField(write_only=True, required=False)
+
     class Meta:
         model = Order
         fields = (
             "id",
             "user",
             "items",
+            "item_data",
             "shipping_address",
+            "shipping_address_id",
             "total_amount",
             "shipping_cost",
             "grand_total",
             "status",
-            "created_at"
+            "created_at",
+            # new address fields
+            "address_line_1", "address_line_2", "city", "state", "zip_code",
+            "country", "recipient_name", "recipient_phone", "is_default"
         )
-        read_only_fields = ("id", "user", "grand_total", "created_at")
+        read_only_fields = ("id", "user", "items", "shipping_address", "grand_total", "created_at")
 
     def get_grand_total(self, obj):
         return obj.total_amount + obj.shipping_cost
+
+    def create(self, validated_data):
+        request = self.context['request']
+        user = request.user
+
+        item_data = validated_data.pop("item_data")
+        shipping_cost = float(validated_data.pop("shipping_cost", 0))
+
+        shipping_address_id = validated_data.pop("shipping_address_id", None)
+
+        # Handle shipping address
+        if shipping_address_id:
+            shipping_address = shipping_address_id
+        else:
+            # Extract address fields
+            address_fields = {
+                field: validated_data.pop(field, None)
+                for field in [
+                    "address_line_1", "address_line_2", "city", "state", "zip_code",
+                    "country", "recipient_name", "recipient_phone", "is_default"
+                ]
+            }
+            # Validate required ones
+            if not address_fields["address_line_1"] or not address_fields["city"] or not address_fields["country"]:
+                raise serializers.ValidationError("Incomplete shipping address provided.")
+            address_fields["user"] = user
+            shipping_address = ShippingAddress.objects.create(**address_fields)
+
+        # Create order
+        order = Order.objects.create(
+            user=user,
+            shipping_address=shipping_address,
+            shipping_cost=shipping_cost
+        )
+
+        total = 0
+        for item in item_data:
+            product_id = item["product_id"]
+            quantity = item["quantity"]
+            price = float(item["price"])
+
+            total += quantity * price
+
+            OrderItem.objects.create(
+                order=order,
+                product_id=product_id,
+                quantity=quantity,
+                price=price
+            )
+
+        order.total_amount = total
+        order.save()
+        return order
 
 
 class CartItemSerializer(serializers.ModelSerializer):
