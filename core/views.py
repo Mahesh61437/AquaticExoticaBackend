@@ -4,13 +4,15 @@ from django.db import models
 from rest_framework import viewsets, filters, generics, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
-from rest_framework.response import Response
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from django.core.mail import send_mail
 import logging
 
-from .serializers import *
+from .models import (Product, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification)
 from .permissions import IsAdminOrReadOnly
+from .serializers import (UserSerializer, ProductSerializer, OrderSerializer, CategorySerializer, CartSerializer,
+                          CartItemSerializer, OrderItemSerializer, ShippingAddressSerializer, StockNotificationSerializer)
 
 logger = logging.getLogger('core')
 
@@ -27,16 +29,16 @@ class UserAdminViewSet(viewsets.ModelViewSet):
         user = self.get_object()
         user.is_staff = True
         user.save()
-        return Response({'detail': f'User {user.username} is now an admin.'}, status=status.HTTP_200_OK)
+        return JsonResponse({'detail': f'User {user.username} is now an admin.'}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'], url_path='revoke-admin')
     def revoke_admin(self, request, pk=None):
         user = self.get_object()
         if user == request.user:
-            return Response({'detail': 'You cannot revoke your own admin access.'}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'detail': 'You cannot revoke your own admin access.'}, status=status.HTTP_400_BAD_REQUEST)
         user.is_staff = False
         user.save()
-        return Response({'detail': f'Admin rights revoked for {user.username}.'}, status=status.HTTP_200_OK)
+        return JsonResponse({'detail': f'Admin rights revoked for {user.username}.'}, status=status.HTTP_200_OK)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -58,37 +60,37 @@ class ProductViewSet(viewsets.ModelViewSet):
     def featured(self, request):
         qs = self.get_queryset().filter(is_featured=True)
         serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="trending")
     def trending(self, request):
         qs = self.get_queryset().filter(is_trending=True)
         serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="new")
     def new(self, request):
         qs = self.get_queryset().filter(is_new=True)
         serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="sale")
     def sale(self, request):
         qs = self.get_queryset().filter(is_sale=True)
         serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="category/(?P<slug>[^/.]+)")
     def category(self, request, slug=None):
         qs = self.get_queryset().filter(category__slug__iexact=slug)
         serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="search")
     def search(self, request):
         query = request.query_params.get("q")
         if not query:
-            return Response({"message": "Search query is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"message": "Search query is required"}, status=status.HTTP_400_BAD_REQUEST)
         qs = self.get_queryset().filter(
             models.Q(name__icontains=query)
             | models.Q(description__icontains=query)
@@ -96,7 +98,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             | models.Q(tags__icontains=query)
         )
         serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
     def get_queryset(self):
         # cache_key = f'products_{self.request.query_params.get("category", "all")}'
@@ -199,18 +201,18 @@ class OrderViewSet(viewsets.GenericViewSet, generics.CreateAPIView, generics.Ret
     @action(detail=False, methods=["get"], url_path="my-orders")
     def my_orders(self, request):
         serializer = self.get_serializer(self.get_queryset(), many=True)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
     @action(detail=True, methods=["patch"], permission_classes=[IsAuthenticated, IsAdminOrReadOnly])
     def update_status(self, request, pk=None):
         order = self.get_object()
         status_value = request.data.get("status")
         if not status_value:
-            return Response({"message": "Status is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"message": "Status is required"}, status=status.HTTP_400_BAD_REQUEST)
         order.status = status_value
         order.save()
         serializer = self.get_serializer(order)
-        return Response(serializer.data)
+        return JsonResponse(serializer.data)
 
 
 class ContactView(APIView):
@@ -223,11 +225,11 @@ class ContactView(APIView):
         message = request.data.get("message")
 
         if not all([name, email, subject, message]):
-            return Response({"message": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"message": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
 
         # Rudimentary email validation
         if "@" not in email:
-            return Response({"message": "Invalid email address"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"message": "Invalid email address"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             # send_mail requires EMAIL_BACKEND configured in settings
@@ -237,9 +239,9 @@ class ContactView(APIView):
                 from_email=None,  # Use default from settings
                 recipient_list=["support@aquaticexotica.com"],
             )
-            return Response({"message": "Thank you! Your message has been sent successfully."})
+            return JsonResponse({"message": "Thank you! Your message has been sent successfully."})
         except Exception as exc:
-            return Response({"message": "Failed to send your message.", "error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JsonResponse({"message": "Failed to send your message.", "error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class StockNotificationSubscribeView(APIView):
@@ -251,13 +253,13 @@ class StockNotificationSubscribeView(APIView):
         product_name = request.data.get("productName")
 
         if not all([email, product_id, product_name]):
-            return Response({"message": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"message": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
 
         if "@" not in email:
-            return Response({"message": "Invalid email address"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"message": "Invalid email address"}, status=status.HTTP_400_BAD_REQUEST)
 
         StockNotification.objects.create(email=email, product_id=product_id, product_name=product_name)
-        return Response({"message": "Successfully subscribed to stock notifications"})
+        return JsonResponse({"message": "Successfully subscribed to stock notifications"})
 
 
 class StockNotificationNotifyView(APIView):
@@ -267,12 +269,12 @@ class StockNotificationNotifyView(APIView):
         product_id = request.data.get("productId")
         product_name = request.data.get("productName")
         if not all([product_id, product_name]):
-            return Response({"message": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({"message": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
 
         subs = StockNotification.objects.filter(product_id=product_id)
         recipients = subs.values_list("email", flat=True)
         if not recipients:
-            return Response({"message": "No subscribers to notify."})
+            return JsonResponse({"message": "No subscribers to notify."})
 
         try:
             send_mail(
@@ -282,9 +284,9 @@ class StockNotificationNotifyView(APIView):
                 recipient_list=list(recipients),
             )
             subs.delete()  # Clear after sending
-            return Response({"message": "Successfully notified subscribers."})
+            return JsonResponse({"message": "Successfully notified subscribers."})
         except Exception as exc:
-            return Response({"message": "Failed to notify subscribers", "error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JsonResponse({"message": "Failed to notify subscribers", "error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # class ProductImageViewSet(viewsets.ModelViewSet):

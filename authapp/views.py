@@ -1,5 +1,6 @@
 from rest_framework import status
-from rest_framework.response import Response
+from django.contrib.auth import get_user_model
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -10,6 +11,7 @@ import logging
 
 logger = logging.getLogger('authapp')
 
+User = get_user_model()
 
 class SignupView(APIView):
     permission_classes = [AllowAny]
@@ -24,20 +26,20 @@ class SignupView(APIView):
 
         if not all([username, password, full_name]):
             logger.warning(f"Signup failed: Missing required fields for username: {username}")
-            return Response({'message': 'Please provide username, password and full name'}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'message': 'Please provide username, password and full name'}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(username=username).exists():
             logger.warning(f"Signup failed: Username already exists: {username}")
-            return Response({'message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'message': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.create_user(username=username, password=password,
                                           first_name=first_name or '', last_name=last_name or '')
             logger.info(f"User created successfully: {username}")
-            return Response({'message': 'Account created successfully. Please sign in.'}, status=status.HTTP_201_CREATED)
+            return JsonResponse({'message': 'Account created successfully. Please sign in.'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(f"Error creating user {username}: {str(e)}")
-            return Response({'message': 'Error creating account'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JsonResponse({'message': 'Error creating account'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class SigninView(APIView):
@@ -53,7 +55,7 @@ class SigninView(APIView):
         if user:
             refresh = RefreshToken.for_user(user)
             logger.info(f"User signed in successfully: {username}")
-            return Response({
+            return JsonResponse({
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
                 'isAdmin': user.is_staff,
@@ -62,7 +64,7 @@ class SigninView(APIView):
                 'id': user.id,
             })
         logger.warning(f"Signin failed: Invalid credentials for username: {username}")
-        return Response({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
+        return JsonResponse({'message': 'Invalid email or password'}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 class LogoutView(APIView):
@@ -75,7 +77,7 @@ class LogoutView(APIView):
             logger.info(f"User logged out successfully: {request.user.username}")
         except Exception as e:
             logger.error(f"Error during logout for user {request.user.username}: {str(e)}")
-        return Response({'message': 'Logged out successfully'})
+        return JsonResponse({'message': 'Logged out successfully'})
 
 
 class MeView(APIView):
@@ -92,7 +94,7 @@ class MeView(APIView):
             'last_name': user.last_name,
             'isAdmin': user.is_staff,
         }
-        return Response(data)
+        return JsonResponse(data)
 
 
 class AdminStatusView(APIView):
@@ -100,7 +102,7 @@ class AdminStatusView(APIView):
 
     def get(self, request):
         logger.info(f"Admin status checked for user: {request.user.username}")
-        return Response({
+        return JsonResponse({
             'isAdmin': request.user.is_staff,
             'message': 'Admin access granted' if request.user.is_staff else 'Not an admin user',
         })
@@ -127,10 +129,10 @@ class UpdateProfileView(APIView):
                 user.phone = phone
             user.save()
             logger.info(f"Profile updated successfully for user: {user.username}")
-            return Response({'message': 'Profile updated successfully'})
+            return JsonResponse({'message': 'Profile updated successfully'})
         except Exception as e:
             logger.error(f"Error updating profile for user {user.username}: {str(e)}")
-            return Response({'message': 'Error updating profile'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JsonResponse({'message': 'Error updating profile'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CreateFirstAdminView(APIView):
@@ -143,7 +145,7 @@ class CreateFirstAdminView(APIView):
 
         if secret_key != 'first-admin-setup-key':
             logger.warning("Invalid secret key used for first admin creation")
-            return Response({'message': 'Invalid secret key'}, status=status.HTTP_403_FORBIDDEN)
+            return JsonResponse({'message': 'Invalid secret key'}, status=status.HTTP_403_FORBIDDEN)
 
         email = request.data.get('email')
         password = request.data.get('password')
@@ -152,11 +154,11 @@ class CreateFirstAdminView(APIView):
 
         if User.objects.filter(is_staff=True).exists():
             logger.warning("Admin users already exist")
-            return Response({'message': 'Admin users already exist.'}, status=status.HTTP_403_FORBIDDEN)
+            return JsonResponse({'message': 'Admin users already exist.'}, status=status.HTTP_403_FORBIDDEN)
 
         if User.objects.filter(username=email).exists():
             logger.warning(f"User with email {email} already exists")
-            return Response({'message': 'User with this email already exists.'}, status=status.HTTP_409_CONFLICT)
+            return JsonResponse({'message': 'User with this email already exists.'}, status=status.HTTP_409_CONFLICT)
 
         try:
             user = User.objects.create_user(
@@ -169,7 +171,7 @@ class CreateFirstAdminView(APIView):
                 is_superuser=True
             )
             logger.info(f"First admin created successfully: {email}")
-            return Response({'message': 'Admin account created successfully. Please sign in.'}, status=status.HTTP_201_CREATED)
+            return JsonResponse({'message': 'Admin account created successfully. Please sign in.'}, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(f"Error creating first admin: {str(e)}")
-            return Response({'message': 'Error creating admin account'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JsonResponse({'message': 'Error creating admin account'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

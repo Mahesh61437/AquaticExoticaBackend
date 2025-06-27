@@ -34,9 +34,9 @@ class CamelSnakeCaseMiddleware:
 
     def __call__(self, request):
         # 🐍 Convert request keys: camelCase → snake_case
+        print("here", request.content_type, request.method, request.body)
         if (
             request.content_type == 'application/json'
-            and request.method in ['POST', 'PUT', 'PATCH']
             and request.body
         ):
             try:
@@ -44,20 +44,22 @@ class CamelSnakeCaseMiddleware:
                 data = json.loads(body_unicode)
                 converted_data = convert_keys_to_snake_case(data)
                 request._body = json.dumps(converted_data).encode('utf-8')
+                print("converted_data == ", converted_data)
             except json.JSONDecodeError:
                 return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
-        # Process the view
         response = self.get_response(request)
 
-        # 🐫 Convert response keys: snake_case → camelCase
-        if isinstance(response, JsonResponse):
-            try:
-                if hasattr(response, 'content') and response['Content-Type'] == 'application/json':
-                    data = json.loads(response.content)
-                    converted = convert_keys_to_camel_case(data)
-                    response.content = json.dumps(converted).encode('utf-8')
-            except Exception:
-                pass  # Avoid breaking the app due to transformation issues
+        try:
+            if hasattr(response, 'content') and response.get('Content-Type') == 'application/json':
+                content = response.content.decode('utf-8')
+                data = json.loads(content)
+                converted = convert_keys_to_camel_case(data)
+                new_content = json.dumps(converted).encode('utf-8')
+                response.content = new_content
+                response['Content-Length'] = str(len(new_content))  # ✅ FIX HERE
+        except Exception as e:
+            print("exception", e)
+            pass  # Fail-safe
 
         return response
