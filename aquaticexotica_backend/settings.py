@@ -11,9 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
-from decouple import config
 import os
-
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -107,11 +106,11 @@ WSGI_APPLICATION = 'aquaticexotica_backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': "aquaticexotica",
-        'USER': "neondb_owner",
-        'PASSWORD': "npg_n2TO4prGlvCx",
-        'HOST': "ep-shrill-lake-a1e9dvdn-pooler.ap-southeast-1.aws.neon.tech",
-        'PORT': "5432",
+        'NAME': os.getenv("DB_NAME"),
+        'USER': os.getenv("DB_USER"),
+        'PASSWORD': os.getenv("DB_PASSWORD"),
+        'HOST': os.getenv("DB_HOST"),
+        'PORT': os.getenv("DB_PORT"),
     }
 }
 
@@ -188,15 +187,24 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+REDIS_URL = os.getenv('REDIS_URL')
+
+# Parse Redis URL
+redis_url = urlparse(REDIS_URL)
+
 CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://default:AVVeAAIjcDEzOTM5ODhhZDI3NWE0NTc0OGJkYjA3OTJjY2E4YzIzYnAxMA@neutral-mule-21854.upstash.io:6379",  # DB 1 for Django
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'CONNECTION_POOL_KWARGS': {
+                'ssl_cert_reqs': None,  # For Upstash Redis
+            }
         }
     }
 }
+
 
 AUTH_USER_MODEL = 'core.User'
 
@@ -313,8 +321,7 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only for development
-CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only for development
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -333,16 +340,6 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_HEADERS = True
 CORS_ALLOW_ALL_METHODS = True
-
-# # Allow all methods
-# CORS_ALLOW_METHODS = [
-#     '*',
-# ]
-
-# # Allow all headers
-# CORS_ALLOW_HEADERS = [
-#     '*',
-# ]
 
 # Additional CORS settings
 CORS_EXPOSE_HEADERS = ['*']
@@ -453,4 +450,4 @@ if not os.path.exists(LOGS_DIR):
 
 
 EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
-SENDGRID_API_KEY = "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"
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
