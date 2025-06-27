@@ -154,17 +154,15 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
+    items = OrderItemSerializer(many=True)  # now writeable
     shipping_address = ShippingAddressSerializer(read_only=True)
     grand_total = serializers.SerializerMethodField()
 
-    # Writable fields
     shipping_address_id = serializers.PrimaryKeyRelatedField(
         queryset=ShippingAddress.objects.all(), write_only=True, required=False
     )
-    item_data = serializers.ListField(write_only=True)
 
-    # Optional fields to create a new address
+    # Optional fields to create new address
     address_line_1 = serializers.CharField(write_only=True, required=False)
     address_line_2 = serializers.CharField(write_only=True, required=False)
     city = serializers.CharField(write_only=True, required=False)
@@ -178,22 +176,16 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = (
-            "id",
-            "user",
-            "items",
-            "item_data",
-            "shipping_address",
-            "shipping_address_id",
-            "total_amount",
-            "shipping_cost",
-            "grand_total",
-            "status",
-            "created_at",
-            # new address fields
+            "id", "user", "items",
+            "shipping_address", "shipping_address_id",
+            "total_amount", "shipping_cost", "grand_total",
+            "status", "created_at",
             "address_line_1", "address_line_2", "city", "state", "zip_code",
             "country", "recipient_name", "recipient_phone", "is_default"
         )
-        read_only_fields = ("id", "user", "items", "shipping_address", "grand_total", "created_at")
+        read_only_fields = (
+            "id", "user", "shipping_address", "grand_total", "created_at", "total_amount"
+        )
 
     def get_grand_total(self, obj):
         return obj.total_amount + obj.shipping_cost
@@ -202,16 +194,14 @@ class OrderSerializer(serializers.ModelSerializer):
         request = self.context['request']
         user = request.user
 
-        item_data = validated_data.pop("item_data")
+        items_data = validated_data.pop("items")
         shipping_cost = float(validated_data.pop("shipping_cost", 0))
-
         shipping_address_id = validated_data.pop("shipping_address_id", None)
 
-        # Handle shipping address
+        # Handle address
         if shipping_address_id:
             shipping_address = shipping_address_id
         else:
-            # Extract address fields
             address_fields = {
                 field: validated_data.pop(field, None)
                 for field in [
@@ -219,13 +209,12 @@ class OrderSerializer(serializers.ModelSerializer):
                     "country", "recipient_name", "recipient_phone", "is_default"
                 ]
             }
-            # Validate required ones
             if not address_fields["address_line_1"] or not address_fields["city"] or not address_fields["country"]:
                 raise serializers.ValidationError("Incomplete shipping address provided.")
             address_fields["user"] = user
             shipping_address = ShippingAddress.objects.create(**address_fields)
 
-        # Create order
+        # Create the order
         order = Order.objects.create(
             user=user,
             shipping_address=shipping_address,
@@ -233,7 +222,7 @@ class OrderSerializer(serializers.ModelSerializer):
         )
 
         total = 0
-        for item in item_data:
+        for item in items_data:
             product_id = item["product_id"]
             quantity = item["quantity"]
             price = float(item["price"])
