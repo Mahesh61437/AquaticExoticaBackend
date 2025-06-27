@@ -34,7 +34,6 @@ class CamelSnakeCaseMiddleware:
 
     def __call__(self, request):
         # 🐍 Convert request keys: camelCase → snake_case
-        print("here", request.content_type, request.method, request.body)
         if (
             request.content_type == 'application/json'
             and request.body
@@ -44,7 +43,6 @@ class CamelSnakeCaseMiddleware:
                 data = json.loads(body_unicode)
                 converted_data = convert_keys_to_snake_case(data)
                 request._body = json.dumps(converted_data).encode('utf-8')
-                print("converted_data == ", converted_data)
             except json.JSONDecodeError:
                 return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
@@ -59,7 +57,6 @@ class CamelSnakeCaseMiddleware:
                 response.content = new_content
                 response['Content-Length'] = str(len(new_content))  # ✅ FIX HERE
         except Exception as e:
-            print("exception", e)
             pass  # Fail-safe
 
         return response
