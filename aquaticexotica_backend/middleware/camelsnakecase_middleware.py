@@ -4,12 +4,19 @@ from django.http import JsonResponse
 
 
 def camel_to_snake(name):
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+    # Insert underscore between lowercase/digit and uppercase
+    name = re.sub(r'(?<=[a-z0-9])([A-Z])', r'_\1', name)
+    # Insert underscore between letters and digits (both ways)
+    name = re.sub(r'(?<=[a-zA-Z])(?=[0-9])', '_', name)
+    name = re.sub(r'(?<=[0-9])(?=[a-zA-Z])', '_', name)
+    return name.lower()
 
 
 def snake_to_camel(name):
     parts = name.split('_')
-    return parts[0] + ''.join(word.title() for word in parts[1:])
+    return parts[0] + ''.join(
+        part if part.isdigit() else part.title() for part in parts[1:]
+    )
 
 
 def convert_keys_to_snake_case(data):
@@ -43,6 +50,7 @@ class CamelSnakeCaseMiddleware:
                 data = json.loads(body_unicode)
                 converted_data = convert_keys_to_snake_case(data)
                 request._body = json.dumps(converted_data).encode('utf-8')
+                print("converted == ", converted_data)
             except json.JSONDecodeError:
                 return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
