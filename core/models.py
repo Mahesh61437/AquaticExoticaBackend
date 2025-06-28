@@ -45,6 +45,7 @@ class ShippingAddress(models.Model):
     country = models.CharField(max_length=100)
     recipient_name = models.CharField(max_length=200, blank=True, null=True)
     recipient_phone = models.CharField(max_length=20, blank=True, null=True)
+    recipient_email = models.EmailField(unique=False, blank=True, null=True)
     is_default = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -135,6 +135,7 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
             "country",
             "recipient_name",
             "recipient_phone",
+            "recipient_email",
             "is_default"
         )
         read_only_fields = ("id",)

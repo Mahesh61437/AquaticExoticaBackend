@@ -13,7 +13,8 @@ logger = logging.getLogger('core')
 class ShippingAddressInline(admin.StackedInline):
     model = ShippingAddress
     extra = 0
-    fields = ('address_line_1', 'address_line_2', 'city', 'state', 'zip_code', 'country', 'recipient_name', 'recipient_phone', 'is_default')
+    fields = ('address_line_1', 'address_line_2', 'city', 'state', 'zip_code', 'country', 'recipient_name',
+              'recipient_phone', 'recipient_email', 'is_default')
 
 
 @admin.register(User)
