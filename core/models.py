@@ -94,6 +94,7 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     image_url = models.URLField(blank=True, null=True)
+    thumbnail_url = models.URLField(blank=True, null=True)
     compare_at_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True,
         help_text="Original price before discount"
@@ -143,20 +144,20 @@ class ProductImage(models.Model):
     """Model to store multiple images for a product"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
     image_url = models.URLField()
-    is_primary = models.BooleanField(default=False)
+    order = models.PositiveIntegerField(default=0, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ["-is_primary", "created_at"]
+        ordering = ["order"]
 
     def __str__(self):
         return f"Image for {self.product.name}"
 
-    def save(self, *args, **kwargs):
-        if self.is_primary:
-            # Ensure only one primary image per product
-            ProductImage.objects.filter(product=self.product, is_primary=True).update(is_primary=False)
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.is_primary:
+    #         # Ensure only one primary image per product
+    #         ProductImage.objects.filter(product=self.product, is_primary=True).update(is_primary=False)
+    #     super().save(*args, **kwargs)
 
 
 class Cart(models.Model):

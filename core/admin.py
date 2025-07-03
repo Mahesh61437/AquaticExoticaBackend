@@ -42,7 +42,7 @@ class ShippingAddressAdmin(admin.ModelAdmin):
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
-    fields = ('image_url', 'is_primary', 'preview_image')
+    fields = ('image_url', 'order', 'preview_image')
     readonly_fields = ('preview_image',)
 
     def preview_image(self, obj):

@@ -46,7 +46,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class ProductImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductImage
-        fields = ("id", "image_url", "is_primary", "created_at")
+        fields = ("id", "image_url", "order", "created_at")
         read_only_fields = ("id", "created_at")
 
 
