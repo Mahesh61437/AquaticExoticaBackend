@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.db import models
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, generics, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
@@ -9,6 +10,7 @@ from rest_framework.views import APIView
 from django.core.mail import send_mail, EmailMessage
 import logging
 
+from .filters import ProductFilter
 from .models import (Product, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag)
 from .permissions import IsAdminOrReadOnly, RoleBasedSafeWritePermission
 from .serializers import (UserSerializer, ProductSerializer, OrderSerializer, CategorySerializer, CartSerializer,
@@ -50,8 +52,9 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [RoleBasedSafeWritePermission]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ["name", "description", "category", "tags"]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    filterset_class = ProductFilter
+    search_fields = ["name", "description", "category__name", "tags__name"]
 
     @action(detail=False, methods=["get"], url_path="featured")
     def featured(self, request):

@@ -71,7 +71,7 @@ class Category(models.Model):
     name = models.CharField(max_length=100, unique=True)
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True, null=True)
-    image_url = models.URLField(blank=True, null=True)
+    image_url = models.URLField(max_length=1000, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -93,14 +93,13 @@ class Product(models.Model):
     name = models.TextField()
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    image_url = models.URLField(blank=True, null=True)
-    thumbnail_url = models.URLField(blank=True, null=True)
+    image_url = models.URLField(max_length=1000, blank=True, null=True)
+    thumbnail_url = models.URLField(max_length=1000, blank=True, null=True)
     compare_at_price = models.DecimalField(
         max_digits=10, decimal_places=2, blank=True, null=True,
         help_text="Original price before discount"
     )
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True)
-    # tags = models.CharField(max_length=255, help_text="Comma-separated tags")
     rating = models.DecimalField(
         max_digits=3, decimal_places=1,
         validators=[MinValueValidator(0), MaxValueValidator(5)],
@@ -149,7 +148,7 @@ class ProductImage(models.Model):
     """Model to store multiple images for a product"""
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
-    image_url = models.URLField()
+    image_url = models.URLField(max_length=1000)
     type = models.CharField(max_length=20, choices=ImageTypeChoices.choices, default=ImageTypeChoices.PRODUCT_IMAGE)
     order = models.PositiveIntegerField(default=0, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
