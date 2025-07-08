@@ -140,10 +140,17 @@ class Product(models.Model):
         return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
 
 
+class ImageTypeChoices(models.TextChoices):
+    THUMBNAIL = 'thumbnail', 'Thumbnail'
+    PRODUCT_IMAGE = 'product_image', 'Product Image'
+
+
 class ProductImage(models.Model):
     """Model to store multiple images for a product"""
+
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
     image_url = models.URLField()
+    type = models.CharField(max_length=20, choices=ImageTypeChoices.choices, default=ImageTypeChoices.PRODUCT_IMAGE)
     order = models.PositiveIntegerField(default=0, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -201,15 +208,16 @@ class CartItem(models.Model):
         return self.quantity * self.product.price
 
 
+class OrderStatusChoices(models.TextChoices):
+    PENDING = 'pending', 'Pending'
+    PROCESSING = 'processing', 'Processing'
+    SHIPPED = 'shipped', 'Shipped'
+    DELIVERED = 'delivered', 'Delivered'
+    CANCELLED = 'cancelled', 'Cancelled'
+
+
 class Order(models.Model):
     """Customer orders"""
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('processing', 'Processing'),
-        ('shipped', 'Shipped'),
-        ('delivered', 'Delivered'),
-        ('cancelled', 'Cancelled'),
-    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     shipping_address = models.ForeignKey(
@@ -217,7 +225,7 @@ class Order(models.Model):
     )
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    status = models.CharField(max_length=20, choices=OrderStatusChoices.choices, default=OrderStatusChoices.PENDING)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
