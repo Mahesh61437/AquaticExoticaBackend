@@ -52,6 +52,9 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), write_only=True, source="category"
+    )
     images = ProductImageSerializer(many=True, read_only=True)
     discount_percentage = serializers.SerializerMethodField()
     is_in_stock = serializers.BooleanField(read_only=True)
@@ -72,7 +75,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "compare_at_price",
             "discount_percentage",
             "stock",
-            "category",
+            "category",  # read-only
+            "category_id",  # write-only
             'tags', 'tag_details',
             "rating",
             "is_active",
