@@ -40,9 +40,16 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
+CSRF_TRUSTED_ORIGINS = []
+
 # Add Railway's provided domain if available
 if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
-    ALLOWED_HOSTS.append(os.environ.get('RAILWAY_PUBLIC_DOMAIN'))
+    railway_public_domain = os.environ.get('RAILWAY_PUBLIC_DOMAIN')
+
+    ALLOWED_HOSTS.append(railway_public_domain)
+    # for CSRF
+    CSRF_TRUSTED_ORIGINS.append(railway_public_domain)
+
 
 # Application definition
 
