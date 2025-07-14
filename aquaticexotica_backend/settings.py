@@ -40,7 +40,7 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
-# CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
+CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
 
 # Add Railway's provided domain if available
 if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
@@ -48,7 +48,7 @@ if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
 
     ALLOWED_HOSTS.append(railway_public_domain)
     # for CSRF
-    # CSRF_TRUSTED_ORIGINS.append(f"https://{railway_public_domain}")
+    CSRF_TRUSTED_ORIGINS.append(f"https://{railway_public_domain}")
 
 
 # Application definition
@@ -72,6 +72,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'aquaticexotica_backend.middleware.camelsnakecase_middleware.CamelSnakeCaseMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
