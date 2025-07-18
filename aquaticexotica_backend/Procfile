@@ -1,0 +1,1 @@
+web: gunicorn aquaticexotica_backend.wsgi
