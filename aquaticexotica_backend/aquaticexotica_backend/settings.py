@@ -464,17 +464,13 @@ if not os.path.exists(LOGS_DIR):
     os.makedirs(LOGS_DIR)
 
 
-EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
-SENDGRID_API_KEY = config("SENDGRID_API_KEY")
-
-
 # ------------ AWS config -------------------
 SITE_ID = 1
 
-AWS_SES_ACCESS_KEY_ID = 'AKIAZBGWUJKTDCKKDVBY'  # Replace with your AWS IAM credentials
-AWS_SES_SECRET_ACCESS_KEY = 'hIJw9S9ZhaaLLbPUsQmNvEuYeAXUprpQmV01FztA'
-AWS_SES_REGION_NAME = 'us-east-1'  # Adjust to your AWS SES region
-AWS_SES_REGION_ENDPOINT = 'https://email.us-east-1.amazonaws.com'
+AWS_SES_ACCESS_KEY_ID = config("AWS_SES_ACCESS_KEY_ID")  # Replace with your AWS IAM credentials
+AWS_SES_SECRET_ACCESS_KEY = config("AWS_SES_SECRET_ACCESS_KEY")
+AWS_SES_REGION_NAME = config("AWS_SES_REGION_NAME")  # Adjust to your AWS SES region
+AWS_SES_REGION_ENDPOINT = config("AWS_SES_REGION_ENDPOINT")
 
 EMAIL_BACKEND = 'django_aws_ses.backends.SESBackend'
 DEFAULT_FROM_EMAIL = 'no-reply@aquaticexotica.com'   # Verified in AWS SES
