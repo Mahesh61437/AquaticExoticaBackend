@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 from datetime import timedelta
+from email.policy import default
 from pathlib import Path
 import os
 from urllib.parse import urlparse
@@ -472,7 +473,7 @@ AWS_SES_SECRET_ACCESS_KEY = config("AWS_SES_SECRET_ACCESS_KEY")
 AWS_SES_REGION_NAME = config("AWS_SES_REGION_NAME")  # Adjust to your AWS SES region
 AWS_SES_REGION_ENDPOINT = config("AWS_SES_REGION_ENDPOINT")
 
-EMAIL_BACKEND = 'django_aws_ses.backends.SESBackend'
+EMAIL_BACKEND = config("EMAIL_BACKEND", default='django_aws_ses.backends.SESBackend')
 DEFAULT_FROM_EMAIL = 'no-reply@aquaticexotica.com'   # Verified in AWS SES
 
 
