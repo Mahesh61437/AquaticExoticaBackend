@@ -33,6 +33,9 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ['id']
+
 
 class ShippingAddress(models.Model):
     """User shipping addresses - users can have multiple addresses"""
