@@ -47,68 +47,88 @@ class UserAdminViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
-    """Product endpoints (admin & public)."""
-
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [RoleBasedSafeWritePermission]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_class = ProductFilter
-    search_fields = ["name", "description", "category__name", "tags__name"]
+    search_fields = ["name", "description", "category_id", "category__name", "tags__name"]
+
+    def get_queryset(self):
+        queryset = Product.objects.all()
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category__name=category)
+        return queryset
 
     @action(detail=False, methods=["get"], url_path="featured")
     def featured(self, request):
         qs = self.get_queryset().filter(is_featured=True)
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="trending")
     def trending(self, request):
         qs = self.get_queryset().filter(is_trending=True)
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="new")
     def new(self, request):
         qs = self.get_queryset().filter(is_new=True)
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="sale")
     def sale(self, request):
         qs = self.get_queryset().filter(is_sale=True)
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="category/(?P<slug>[^/.]+)")
     def category(self, request, slug=None):
         qs = self.get_queryset().filter(category__slug__iexact=slug)
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=["get"], url_path="related")
     def related_products(self, request, pk=None):
         product = self.get_object()
-
-        # Step 1: Start with same category
-        related = self.get_queryset().filter(
-            category=product.category
-        ).exclude(id=product.id)
-
-        # Collect into a list first (for deduplication)
+        related = self.get_queryset().filter(category=product.category).exclude(id=product.id)
         related_products = list(related.distinct()[:5])
         related_ids = {p.id for p in related_products}
 
-        # Step 2: If fewer than 5, fill with tag-matching products
         if len(related_products) < 5 and product.tags.exists():
             tag_related = Product.objects.filter(
                 tags__in=product.tags.all()
             ).exclude(id__in=related_ids | {product.id}).distinct()
-
             needed = 5 - len(related_products)
             related_products += list(tag_related[:needed])
 
-        # Serialize and return
+        page = self.paginate_queryset(related_products)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(related_products, many=True)
         return Response(serializer.data)
 
@@ -124,27 +144,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         )
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
-
-    def get_queryset(self):
-        # cache_key = f'products_{self.request.query_params.get("category", "all")}'
-        # cached_products = cache.get(cache_key)
-        #
-        # if cached_products is None:
-        #     logger.info(f"Products cache miss for category: {self.request.query_params.get('category', 'all')}")
-        #     queryset = Product.objects.all()
-        #     category = self.request.query_params.get('category')
-        #     if category:
-        #         queryset = queryset.filter(category__name=category)
-        #     cache.set(cache_key, queryset, timeout=3600)  # Cache for 1 hour
-        #     return queryset
-        #
-        # logger.info(f"Products retrieved from cache for category: {self.request.query_params.get('category', 'all')}")
-        # return cached_products
-        queryset = Product.objects.all()
-        category = self.request.query_params.get('category')
-        if category:
-            queryset = queryset.filter(category__name=category)
-        return queryset
 
     def perform_create(self, serializer):
         logger.info(f"Creating new product: {serializer.validated_data.get('name')}")
@@ -163,26 +162,20 @@ class ProductViewSet(viewsets.ModelViewSet):
         # cache.delete_pattern('products_*')
         instance.delete()
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [RoleBasedSafeWritePermission]
-
-    def get_queryset(self):
-        # cache_key = 'all_categories'
-        # cached_categories = cache.get(cache_key)
-        #
-        # if cached_categories is None:
-        #     logger.info("Categories cache miss - fetching from database")
-        #     categories = Category.objects.all()
-        #     cache.set(cache_key, categories, timeout=3600)  # Cache for 1 hour
-        #     return categories
-        #
-        # logger.info("Categories retrieved from cache")
-        # return cached_categories
-        categories = Category.objects.all()
-        return categories
 
     def perform_create(self, serializer):
         logger.info(f"Creating new category: {serializer.validated_data.get('name')}")

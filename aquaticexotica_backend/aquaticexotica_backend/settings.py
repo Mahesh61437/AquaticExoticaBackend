@@ -181,7 +181,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'aquaticexotica_backend.pagination.FlatPageNumberPagination',
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
@@ -468,10 +468,10 @@ if not os.path.exists(LOGS_DIR):
 # ------------ AWS config -------------------
 SITE_ID = 1
 
-AWS_SES_ACCESS_KEY_ID = config("AWS_SES_ACCESS_KEY_ID")  # Replace with your AWS IAM credentials
-AWS_SES_SECRET_ACCESS_KEY = config("AWS_SES_SECRET_ACCESS_KEY")
-AWS_SES_REGION_NAME = config("AWS_SES_REGION_NAME")  # Adjust to your AWS SES region
-AWS_SES_REGION_ENDPOINT = config("AWS_SES_REGION_ENDPOINT")
+AWS_SES_ACCESS_KEY_ID = config("AWS_SES_ACCESS_KEY_ID", "testing")  # Replace with your AWS IAM credentials
+AWS_SES_SECRET_ACCESS_KEY = config("AWS_SES_SECRET_ACCESS_KEY", "testing")
+AWS_SES_REGION_NAME = config("AWS_SES_REGION_NAME", "useast-1")  # Adjust to your AWS SES region
+AWS_SES_REGION_ENDPOINT = config("AWS_SES_REGION_ENDPOINT", "")
 
 EMAIL_BACKEND = config("EMAIL_BACKEND", default='django_aws_ses.backends.SESBackend')
 DEFAULT_FROM_EMAIL = 'no-reply@aquaticexotica.com'   # Verified in AWS SES
