@@ -69,7 +69,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    'django_aws_ses',
+    # 'django_aws_ses',
 ]
 
 MIDDLEWARE = [
@@ -423,13 +423,16 @@ if not os.path.exists(LOGS_DIR):
 # ------------ AWS config -------------------
 SITE_ID = 1
 
-AWS_SES_ACCESS_KEY_ID = config("AWS_SES_ACCESS_KEY_ID", "testing")  # Replace with your AWS IAM credentials
-AWS_SES_SECRET_ACCESS_KEY = config("AWS_SES_SECRET_ACCESS_KEY", "testing")
-AWS_SES_REGION_NAME = config("AWS_SES_REGION_NAME", "useast-1")  # Adjust to your AWS SES region
-AWS_SES_REGION_ENDPOINT = config("AWS_SES_REGION_ENDPOINT", "")
+EMAIL_BACKEND = "sendgrid_backend.SendgridBackend"
+SENDGRID_API_KEY = config("SENDGRID_API_KEY")
 
-EMAIL_BACKEND = config("EMAIL_BACKEND", default='django_aws_ses.backends.SESBackend')
-DEFAULT_FROM_EMAIL = 'no-reply@aquaticexotica.com'   # Verified in AWS SES
+# AWS_SES_ACCESS_KEY_ID = config("AWS_SES_ACCESS_KEY_ID", "testing")  # Replace with your AWS IAM credentials
+# AWS_SES_SECRET_ACCESS_KEY = config("AWS_SES_SECRET_ACCESS_KEY", "testing")
+# AWS_SES_REGION_NAME = config("AWS_SES_REGION_NAME", "useast-1")  # Adjust to your AWS SES region
+# AWS_SES_REGION_ENDPOINT = config("AWS_SES_REGION_ENDPOINT", "")
+#
+# EMAIL_BACKEND = config("EMAIL_BACKEND", default='django_aws_ses.backends.SESBackend')
+# DEFAULT_FROM_EMAIL = 'no-reply@aquaticexotica.com'   # Verified in AWS SES
 
 
 
