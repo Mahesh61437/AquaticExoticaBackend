@@ -69,6 +69,7 @@ class CamelSnakeCaseMiddleware:
                 response.content = new_content
                 response['Content-Length'] = str(len(new_content))  # ✅ FIX HERE
                 print(f"Response from {request.path}: {new_content}")
+                logger.info(f"Response from {request.path}: {new_content}")
 
         except Exception as e:
             pass  # Fail-safe
