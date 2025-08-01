@@ -1,1 +1,1 @@
-web: gunicorn aquaticexotica_backend.wsgi
+web: gunicorn aquaticexotica_backend.aquaticexotica_backend.wsgi
