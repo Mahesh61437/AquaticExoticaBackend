@@ -55,11 +55,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "description", "category_id", "category__name", "tags__name"]
 
     def get_queryset(self):
-        queryset = Product.objects.all()
-        category = self.request.query_params.get('category')
-        if category:
-            queryset = queryset.filter(category__name=category)
-        return queryset
+        return Product.objects.all()
 
     @action(detail=False, methods=["get"], url_path="featured")
     def featured(self, request):
