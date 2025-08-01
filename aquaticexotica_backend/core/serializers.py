@@ -60,10 +60,9 @@ class ProductSerializer(serializers.ModelSerializer):
     is_in_stock = serializers.BooleanField(read_only=True)
 
     tags = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all()
+        many=True, queryset=Tag.objects.all().order_by("id")
     )
     tag_details = TagSerializer(source='tags', many=True, read_only=True)
-
 
     class Meta:
         model = Product

@@ -52,10 +52,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [RoleBasedSafeWritePermission]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_class = ProductFilter
-    search_fields = ["name", "description", "category_id", "category__name", "tags__name"]
-
-    def get_queryset(self):
-        return Product.objects.all()
+    search_fields = ["name", "category_id"]
 
     @action(detail=False, methods=["get"], url_path="featured")
     def featured(self, request):
@@ -158,15 +155,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         # cache.delete_pattern('products_*')
         instance.delete()
 
-    # def list(self, request, *args, **kwargs):
-    #     queryset = self.filter_queryset(self.get_queryset())
-    #     page = self.paginate_queryset(queryset)
-    #     if page is not None:
-    #         serializer = self.get_serializer(page, many=True)
-    #         return self.get_paginated_response(serializer.data)
-    #
-    #     serializer = self.get_serializer(queryset, many=True)
-    #     return Response(serializer.data)
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            paginated_response = self.get_paginated_response(serializer.data)
+            logger.info("Paginated response data: %s", paginated_response.data)
+            return paginated_response
+
+        serializer = self.get_serializer(queryset, many=True)
+        logger.info("Non-paginated response data: %s", serializer.data)
+        return Response(serializer.data)
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()

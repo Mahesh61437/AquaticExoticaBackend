@@ -1,6 +1,10 @@
+import logging
 import re
 import json
 from django.http import JsonResponse
+
+
+logger = logging.getLogger('core')
 
 
 def camel_to_snake(name):
@@ -64,6 +68,8 @@ class CamelSnakeCaseMiddleware:
                 new_content = json.dumps(converted).encode('utf-8')
                 response.content = new_content
                 response['Content-Length'] = str(len(new_content))  # ✅ FIX HERE
+                logger.info(f"Response from {request.path}: {new_content}")
+
         except Exception as e:
             pass  # Fail-safe
 
