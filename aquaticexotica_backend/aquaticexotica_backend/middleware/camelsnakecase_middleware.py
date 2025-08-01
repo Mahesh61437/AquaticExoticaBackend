@@ -68,7 +68,7 @@ class CamelSnakeCaseMiddleware:
                 new_content = json.dumps(converted).encode('utf-8')
                 response.content = new_content
                 response['Content-Length'] = str(len(new_content))  # ✅ FIX HERE
-                logger.info(f"Response from {request.path}: {new_content}")
+                print(f"Response from {request.path}: {new_content}")
 
         except Exception as e:
             pass  # Fail-safe

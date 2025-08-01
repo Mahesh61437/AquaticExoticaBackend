@@ -161,11 +161,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             paginated_response = self.get_paginated_response(serializer.data)
-            logger.info("Paginated response data: %s", paginated_response.data)
+            print("Paginated response data: %s", paginated_response.data)
             return paginated_response
 
         serializer = self.get_serializer(queryset, many=True)
-        logger.info("Non-paginated response data: %s", serializer.data)
+        print("Non-paginated response data: %s", serializer.data)
         return Response(serializer.data)
 
 
