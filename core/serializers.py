@@ -127,6 +127,74 @@ class ProductSerializer(serializers.ModelSerializer):
             return representation
 
 
+class ProductListSerializer(serializers.ModelSerializer):
+    """Serializer for listing products (no images)"""
+    categories = CategorySerializer(many=True, read_only=True)
+    category_ids = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), many=True, write_only=True, source="categories"
+    )
+    discount_percentage = serializers.SerializerMethodField()
+    is_in_stock = serializers.BooleanField(read_only=True)
+
+    tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
+    tag_details = TagSerializer(source="tags", many=True, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = (
+            "id",
+            "name",
+            "description",
+            "price",
+            "compare_at_price",
+            "discount_percentage",
+            "stock",
+            "categories",      # read-only
+            "category_ids",    # write-only
+            "tags", "tag_details",
+            "rating",
+            "is_active",
+            "is_new",
+            "is_sale",
+            "is_featured",
+            "is_trending",
+            "is_in_stock",
+            "image_url",
+            "thumbnail_url",
+        )
+        read_only_fields = ("id", "discount_percentage", "is_in_stock")
+
+    def get_discount_percentage(self, obj):
+        if obj.compare_at_price and obj.price < obj.compare_at_price:
+            return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
+        return 0
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop("tags", None)
+        categories = validated_data.pop("categories", None)
+
+        # Update regular fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update relations
+        if tags is not None:
+            instance.tags.set(tags)
+        if categories is not None:
+            instance.categories.set(categories)
+
+        return instance
+
+
+class ProductDetailSerializer(ProductListSerializer):
+    """Serializer for detail view (includes product images)"""
+    images = ProductImageSerializer(many=True, read_only=True)
+
+    class Meta(ProductListSerializer.Meta):
+        fields = ProductListSerializer.Meta.fields + ("images",)
+
+
 class ShippingAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShippingAddress

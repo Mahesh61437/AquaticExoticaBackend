@@ -54,12 +54,21 @@ class ProductImageInline(admin.TabularInline):
 
 
 class ProductInline(admin.TabularInline):
-    model = Product
+    """Inline for showing products linked to this category"""
+    model = Product.categories.through  # ✅ use the M2M through table
     extra = 0
-    fields = ('name', 'price', 'stock', 'is_active')
-    readonly_fields = ('name', 'price', 'stock', 'is_active')
-    show_change_link = True
+    verbose_name = "Product"
+    verbose_name_plural = "Products"
+    fields = ('product',)
+    readonly_fields = ('product',)
     can_delete = False
+    show_change_link = True
+
+    def product(self, obj):
+        """Show linked product with name"""
+        return obj.product
+
+    product.short_description = "Product"
 
 
 @admin.register(Category)
@@ -71,7 +80,8 @@ class CategoryAdmin(admin.ModelAdmin):
     inlines = [ProductInline]
 
     def product_count(self, obj):
-        return obj.products.count()
+        return obj.products.count()  # ✅ still works with M2M (thanks to related_name='products')
+
     product_count.short_description = 'Products'
 
     def save_model(self, request, obj, form, change):
@@ -91,36 +101,65 @@ class ProductTagInline(admin.TabularInline):
     model = Product.tags.through
 
 
-@admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'price', 'stock', 'is_active', 'is_new', 'is_sale', 'is_featured', 'is_trending')
-    list_filter = ('is_active', 'is_new', 'is_sale', 'is_featured', 'is_trending', 'category')
-    search_fields = ('name', 'description', 'tags')
-    inlines = [ProductImageInline, ProductTagInline]
-    raw_id_fields = ('category',)
-    readonly_fields = ('created_at', 'updated_at')
-    filter_horizontal = ('tags',)
-    fieldsets = (
-        ('Basic Information', {
-            'fields': ('name', 'description', 'category', 'tags')
-        }),
-        ('Pricing & Stock', {
-            'fields': ('price', 'compare_at_price', 'stock')
-        }),
-        ('Status Flags', {
-            'fields': ('is_active', 'is_new', 'is_sale', 'is_featured', 'is_trending')
-        }),
-    )
+class ProductCategoryInline(admin.TabularInline):
+    model = Product.categories.through
 
-    def save_model(self, request, obj, form, change):
-        logger.info(f"{'Updating' if change else 'Creating'} product: {obj.name}")
-        super().save_model(request, obj, form, change)
-        # cache.delete_pattern('products_*')
 
-    def delete_model(self, request, obj):
-        logger.info(f"Deleting product: {obj.name}")
-        super().delete_model(request, obj)
-        # cache.delete_pattern('products_*')
+# @admin.register(Product)
+# class ProductAdmin(admin.ModelAdmin):
+#     list_display = (
+#         'name',
+#         'get_categories',  # ✅ show categories
+#         'price',
+#         'stock',
+#         'is_active',
+#         'is_new',
+#         'is_sale',
+#         'is_featured',
+#         'is_trending',
+#     )
+#     list_filter = (
+#         'is_active',
+#         'is_new',
+#         'is_sale',
+#         'is_featured',
+#         'is_trending',
+#         'categories',   # ✅ updated
+#     )
+#     search_fields = ('name', 'description', 'tags__name')
+#     inlines = [ProductCategoryInline, ProductImageInline, ProductTagInline]
+#     readonly_fields = ('created_at', 'updated_at')
+#     filter_horizontal = ('tags', 'categories')  # ✅ ManyToMany fields
+#     fieldsets = (
+#         ('Basic Information', {
+#             'fields': ('name', 'description', 'categories', 'tags')
+#         }),
+#         ('Pricing & Stock', {
+#             'fields': ('price', 'compare_at_price', 'stock')
+#         }),
+#         ('Status Flags', {
+#             'fields': ('is_active', 'is_new', 'is_sale', 'is_featured', 'is_trending')
+#         }),
+#         ('Timestamps', {
+#             'fields': ('created_at', 'updated_at')
+#         }),
+#     )
+#
+#     def get_categories(self, obj):
+#         """Show categories as comma-separated names in list view"""
+#         return ", ".join([c.name for c in obj.categories.all()])
+#
+#     get_categories.short_description = "Categories"
+#
+#     def save_model(self, request, obj, form, change):
+#         logger.info(f"{'Updating' if change else 'Creating'} product: {obj.name}")
+#         super().save_model(request, obj, form, change)
+#         # cache.delete_pattern('products_*')
+#
+#     def delete_model(self, request, obj):
+#         logger.info(f"Deleting product: {obj.name}")
+#         super().delete_model(request, obj)
+#         # cache.delete_pattern('products_*')
 
 
 class CartItemInline(admin.TabularInline):

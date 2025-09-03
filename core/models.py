@@ -99,7 +99,8 @@ class Product(models.Model):
         max_digits=10, decimal_places=2, blank=True, null=True,
         help_text="Original price before discount"
     )
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True)
+    # supporting multiple categories for single product
+    categories = models.ManyToManyField(Category, related_name='products', blank=True)
     rating = models.DecimalField(
         max_digits=3, decimal_places=1,
         validators=[MinValueValidator(0), MaxValueValidator(5)],

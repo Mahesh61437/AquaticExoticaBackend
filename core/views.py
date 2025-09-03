@@ -15,7 +15,7 @@ from .models import (Product, Order, Category, Cart, CartItem, OrderItem, Shippi
 from .permissions import IsAdminOrReadOnly, RoleBasedSafeWritePermission
 from .serializers import (UserSerializer, ProductSerializer, OrderSerializer, CategorySerializer, CartSerializer,
                           CartItemSerializer, OrderItemSerializer, ShippingAddressSerializer,
-                          StockNotificationSerializer, TagSerializer)
+                          StockNotificationSerializer, TagSerializer, ProductDetailSerializer, ProductListSerializer)
 
 logger = logging.getLogger('core')
 
@@ -50,11 +50,16 @@ class ProductViewSet(viewsets.ModelViewSet):
     """Product endpoints (admin & public)."""
 
     queryset = Product.objects.all()
-    serializer_class = ProductSerializer
     permission_classes = [RoleBasedSafeWritePermission]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_class = ProductFilter
-    search_fields = ["name", "description", "category__name", "tags__name"]
+    search_fields = ["name", "description", "categories__name", "tags__name"]
+
+    def get_serializer_class(self):
+        """Use different serializers for list and detail views"""
+        if self.action == "retrieve":  # GET /products/<id>/
+            return ProductDetailSerializer
+        return ProductListSerializer
 
     @action(detail=False, methods=["get"], url_path="featured")
     def featured(self, request):
@@ -82,7 +87,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="category/(?P<slug>[^/.]+)")
     def category(self, request, slug=None):
-        qs = self.get_queryset().filter(category__slug__iexact=slug)
+        qs = self.get_queryset().filter(categories__slug__iexact=slug)
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
@@ -90,16 +95,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     def related_products(self, request, pk=None):
         product = self.get_object()
 
-        # Step 1: Start with same category
+        # Step 1: Same categories
         related = self.get_queryset().filter(
-            category=product.category
+            categories__in=product.categories.all()
         ).exclude(id=product.id)
 
-        # Collect into a list first (for deduplication)
         related_products = list(related.distinct()[:5])
         related_ids = {p.id for p in related_products}
 
-        # Step 2: If fewer than 5, fill with tag-matching products
+        # Step 2: Fill with tag-related products if fewer than 5
         if len(related_products) < 5 and product.tags.exists():
             tag_related = Product.objects.filter(
                 tags__in=product.tags.all()
@@ -108,7 +112,6 @@ class ProductViewSet(viewsets.ModelViewSet):
             needed = 5 - len(related_products)
             related_products += list(tag_related[:needed])
 
-        # Serialize and return
         serializer = self.get_serializer(related_products, many=True)
         return Response(serializer.data)
 
@@ -119,49 +122,18 @@ class ProductViewSet(viewsets.ModelViewSet):
             return Response({"message": "Search query is required"}, status=status.HTTP_400_BAD_REQUEST)
         qs = self.get_queryset().filter(
             models.Q(name__icontains=query)
-            | models.Q(category__name__icontains=query)
+            | models.Q(categories__name__icontains=query)
             | models.Q(tags__name__icontains=query)
-        )
+        ).distinct()
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
     def get_queryset(self):
-        # cache_key = f'products_{self.request.query_params.get("category", "all")}'
-        # cached_products = cache.get(cache_key)
-        #
-        # if cached_products is None:
-        #     logger.info(f"Products cache miss for category: {self.request.query_params.get('category', 'all')}")
-        #     queryset = Product.objects.all()
-        #     category = self.request.query_params.get('category')
-        #     if category:
-        #         queryset = queryset.filter(category__name=category)
-        #     cache.set(cache_key, queryset, timeout=3600)  # Cache for 1 hour
-        #     return queryset
-        #
-        # logger.info(f"Products retrieved from cache for category: {self.request.query_params.get('category', 'all')}")
-        # return cached_products
         queryset = Product.objects.all()
-        category = self.request.query_params.get('category')
+        category = self.request.query_params.get("category")
         if category:
-            queryset = queryset.filter(category__name=category)
+            queryset = queryset.filter(categories__name=category)
         return queryset
-
-    def perform_create(self, serializer):
-        logger.info(f"Creating new product: {serializer.validated_data.get('name')}")
-        product = serializer.save()
-        # cache.delete_pattern('products_*')
-        return product
-
-    def perform_update(self, serializer):
-        logger.info(f"Updating product: {serializer.instance.name}")
-        product = serializer.save()
-        # cache.delete_pattern('products_*')
-        return product
-
-    def perform_destroy(self, instance):
-        logger.info(f"Deleting product: {instance.name}")
-        # cache.delete_pattern('products_*')
-        instance.delete()
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
