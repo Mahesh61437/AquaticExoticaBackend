@@ -119,12 +119,22 @@ class ProductViewSet(viewsets.ModelViewSet):
     def search(self, request):
         query = request.query_params.get("q")
         if not query:
-            return Response({"message": "Search query is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Search query is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         qs = self.get_queryset().filter(
             models.Q(name__icontains=query)
             | models.Q(categories__name__icontains=query)
             | models.Q(tags__name__icontains=query)
         ).distinct()
+
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
