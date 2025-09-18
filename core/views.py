@@ -253,7 +253,7 @@ class StockNotificationSubscribeView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
-        product_id = request.data.get("productId")
+        product_id = request.data.get("product_id")
 
         if not all([email, product_id]):
             return Response({"message": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
