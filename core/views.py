@@ -254,15 +254,14 @@ class StockNotificationSubscribeView(APIView):
     def post(self, request):
         email = request.data.get("email")
         product_id = request.data.get("productId")
-        product_name = request.data.get("productName")
 
-        if not all([email, product_id, product_name]):
+        if not all([email, product_id]):
             return Response({"message": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
 
         if "@" not in email:
             return Response({"message": "Invalid email address"}, status=status.HTTP_400_BAD_REQUEST)
 
-        StockNotification.objects.create(email=email, product_id=product_id, product_name=product_name)
+        StockNotification.objects.create(email=email, product_id=product_id)
         return Response({"message": "Successfully subscribed to stock notifications"})
 
 
