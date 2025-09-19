@@ -274,3 +274,46 @@ class StockNotification(models.Model):
 
     def __str__(self):
         return f"{self.user.email} -> {self.product.name}"
+
+
+class NotificationType(models.TextChoices):
+    USER_SIGNUP = "user_signup", "User Signup"
+    ORDER_CREATED = "order_created", "Order Created"
+    STOCK_NOTIFICATION = "stock_notification", "Stock Notification"
+    LOW_STOCK = "low_stock", "Low Stock Alert"
+    ORDER_STATUS_CHANGE = "order_status_change", "Order Status Change"
+
+
+class AppNotification(models.Model):
+
+    id = models.AutoField(primary_key=True)
+    type = models.CharField(max_length=50, choices=NotificationType.choices)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    data = models.JSONField(default=dict)  # Additional context data
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    user = models.ForeignKey(User, null=True, blank=True, on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.type} - {self.title}"
+
+    @classmethod
+    def create_notification(cls, notification_type, title, message, data=None, user=None):
+        """
+        Helper method to create a notification.
+        - user=None → admin-only/global notification
+        - user=User → user-specific notification (admins also see it via filtering)
+        """
+        return cls.objects.create(
+            type=notification_type,
+            title=title,
+            message=message,
+            data=data or {},
+            user=user,
+        )

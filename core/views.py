@@ -1,6 +1,8 @@
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, generics, status
 from rest_framework.decorators import action
@@ -11,11 +13,13 @@ from django.core.mail import send_mail, EmailMessage
 import logging
 
 from .filters import ProductFilter
-from .models import (Product, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag)
+from .models import (Product, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag,
+                     AppNotification, NotificationType)
 from .permissions import IsAdminOrReadOnly, RoleBasedSafeWritePermission
 from .serializers import (UserSerializer, ProductSerializer, OrderSerializer, CategorySerializer, CartSerializer,
                           CartItemSerializer, OrderItemSerializer, ShippingAddressSerializer,
-                          StockNotificationSerializer, TagSerializer, ProductDetailSerializer, ProductListSerializer)
+                          StockNotificationSerializer, TagSerializer, ProductDetailSerializer, ProductListSerializer,
+                          AppNotificationSerializer)
 
 logger = logging.getLogger('core')
 
@@ -372,3 +376,47 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [RoleBasedSafeWritePermission]
+
+
+class AppNotificationViewSet(viewsets.ModelViewSet):
+    queryset = AppNotification.objects.all()
+    serializer_class = AppNotificationSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = AppNotification.objects.all()
+
+        if user.is_staff:
+            # Admins: only see admin-specific notifications
+            return qs.filter(
+                Q(type=NotificationType.USER_SIGNUP) | Q(type=NotificationType.ORDER_CREATED)
+                | Q(type=NotificationType.LOW_STOCK)
+            )
+
+        else:
+            # Normal users: see only their relevant notifications
+            return qs.filter(
+                Q(type=NotificationType.ORDER_CREATED, user=user)
+                | Q(type=NotificationType.STOCK_NOTIFICATION, user=user)
+                | Q(type=NotificationType.ORDER_STATUS_CHANGE, user=user)
+            )
+
+    @action(detail=False, methods=["post"], url_path="mark-all-read")
+    def mark_all_read(self, request):
+        qs = self.get_queryset().filter(is_read=False)
+        updated_count = qs.update(is_read=True, read_at=now())
+        return Response({"message": f"{updated_count} notifications marked as read"})
+
+    @action(detail=False, methods=["get"], url_path="unread-count")
+    def unread_count(self, request):
+        unread_count = self.get_queryset().filter(is_read=False).count()
+        return Response({"unread_count": unread_count})
+
+    @action(detail=True, methods=["patch"], url_path="mark-read")
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+        if not notification.is_read:
+            notification.is_read = True
+            notification.read_at = now()
+            notification.save()
+        return Response(self.get_serializer(notification).data)

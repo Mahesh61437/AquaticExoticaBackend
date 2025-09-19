@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     Product, Category, ShippingAddress, Order, OrderItem,
-    ProductImage, Cart, CartItem, StockNotification, Tag
+    ProductImage, Cart, CartItem, StockNotification, Tag, AppNotification
 )
 
 User = get_user_model()
@@ -359,4 +359,13 @@ class StockNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockNotification
         fields = ("id", "user", "product", "is_notified", "created_at")
-        read_only_fields = ("id", "created_at") 
+        read_only_fields = ("id", "created_at")
+
+
+class AppNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AppNotification
+        fields = [
+            "id", "type", "title", "message", "data",
+            "is_read", "created_at", "read_at"
+        ]
