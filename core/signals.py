@@ -8,7 +8,7 @@ from .models import (
     Product,
     Order,
     StockNotification,
-    AppNotification,
+    AppNotification, NotificationType,
 )
 
 
@@ -19,7 +19,7 @@ from .models import (
 def user_signup_notification(sender, instance, created, **kwargs):
     if created:
         AppNotification.create_notification(
-            notification_type=AppNotification.NotificationType.USER_SIGNUP,
+            notification_type=NotificationType.USER_SIGNUP,
             title="New User Registration",
             message=f"{instance.full_name} ({instance.email}) has signed up.",
             data={
@@ -38,7 +38,7 @@ def order_created_notification(sender, instance, created, **kwargs):
     if created:
         # Customer notification
         AppNotification.objects.create(
-            type=AppNotification.NotificationType.ORDER_CREATED,
+            type=NotificationType.ORDER_CREATED,
             user=instance.user,
             title="Your order has been placed",
             message=f"Order #{instance.id} was successfully created.",
@@ -47,7 +47,7 @@ def order_created_notification(sender, instance, created, **kwargs):
 
         # Admin notification
         AppNotification.objects.create(
-            type=AppNotification.NotificationType.ORDER_CREATED,
+            type=NotificationType.ORDER_CREATED,
             user=None,  # global admin view
             title="New order created",
             message=f"User {instance.user.full_name} placed Order #{instance.id}",
@@ -71,7 +71,7 @@ def order_status_change_notification(sender, instance, **kwargs):
     if old_instance.status != instance.status:
         # Notify the customer
         AppNotification.create_notification(
-            notification_type=AppNotification.NotificationType.ORDER_STATUS_CHANGE,
+            notification_type=NotificationType.ORDER_STATUS_CHANGE,
             title="Order Status Updated",
             message=f"Your order #{instance.id} status changed to {instance.status}.",
             data={
@@ -84,7 +84,7 @@ def order_status_change_notification(sender, instance, **kwargs):
 
         # Notify admins (global)
         AppNotification.create_notification(
-            notification_type=AppNotification.NotificationType.ORDER_STATUS_CHANGE,
+            notification_type=NotificationType.ORDER_STATUS_CHANGE,
             title="Order Status Changed",
             message=f"Order #{instance.id} for {instance.user.email} changed to {instance.status}.",
             data={
@@ -104,7 +104,7 @@ def low_stock_notification(sender, instance, **kwargs):
     LOW_STOCK_THRESHOLD = 5
     if instance.stock < LOW_STOCK_THRESHOLD:
         AppNotification.create_notification(
-            notification_type=AppNotification.NotificationType.LOW_STOCK,
+            notification_type=NotificationType.LOW_STOCK,
             title="Low Stock Alert",
             message=f"Product '{instance.name}' is running low on stock ({instance.stock} left).",
             data={
@@ -125,7 +125,7 @@ def stock_back_in_notification(sender, instance, **kwargs):
         for sub in subs:
             # Notify the user
             AppNotification.create_notification(
-                notification_type=AppNotification.NotificationType.STOCK_NOTIFICATION,
+                notification_type=NotificationType.STOCK_NOTIFICATION,
                 title="Back in Stock",
                 message=f"The product '{instance.name}' is now available.",
                 data={

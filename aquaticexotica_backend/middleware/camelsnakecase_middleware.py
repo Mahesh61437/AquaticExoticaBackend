@@ -54,7 +54,7 @@ class CamelSnakeCaseMiddleware:
                 data = json.loads(body_unicode)
                 converted_data = convert_keys_to_snake_case(data)
                 request._body = json.dumps(converted_data).encode('utf-8')
-                print("converted == ", converted_data)
+                # print("converted == ", converted_data)
             except json.JSONDecodeError:
                 return JsonResponse({'error': 'Invalid JSON'}, status=400)
 
@@ -68,8 +68,8 @@ class CamelSnakeCaseMiddleware:
                 new_content = json.dumps(converted).encode('utf-8')
                 response.content = new_content
                 response['Content-Length'] = str(len(new_content))  # ✅ FIX HERE
-                print(f"Response from {request.path}: {new_content}")
-                logger.info(f"Response from {request.path}: {new_content}")
+                # print(f"Response from {request.path}: {new_content}")
+                # logger.info(f"Response from {request.path}: {new_content}")
 
         except Exception as e:
             pass  # Fail-safe
