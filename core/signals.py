@@ -118,23 +118,23 @@ def low_stock_notification(sender, instance, **kwargs):
 # ----------------------------
 # 5. STOCK NOTIFICATION (back in stock for subscribed users)
 # ----------------------------
-@receiver(post_save, sender=Product)
-def stock_back_in_notification(sender, instance, **kwargs):
-    if instance.stock > 0:
-        subs = StockNotification.objects.filter(product=instance, is_notified=False)
-        for sub in subs:
-            # Notify the user
-            AppNotification.create_notification(
-                notification_type=NotificationType.STOCK_NOTIFICATION,
-                title="Back in Stock",
-                message=f"The product '{instance.name}' is now available.",
-                data={
-                    "product_id": instance.id,
-                    "product_name": instance.name,
-                    "stock": instance.stock,
-                },
-                user=sub.user,
-            )
-            # Mark as notified to prevent duplicates
-            sub.is_notified = True
-            sub.save(update_fields=["is_notified"])
+# @receiver(post_save, sender=Product)
+# def stock_back_in_notification(sender, instance, **kwargs):
+#     if instance.stock > 0:
+#         subs = StockNotification.objects.filter(product=instance, is_notified=False)
+#         for sub in subs:
+#             # Notify the user
+#             AppNotification.create_notification(
+#                 notification_type=NotificationType.STOCK_NOTIFICATION,
+#                 title="Back in Stock",
+#                 message=f"The product '{instance.name}' is now available.",
+#                 data={
+#                     "product_id": instance.id,
+#                     "product_name": instance.name,
+#                     "stock": instance.stock,
+#                 },
+#                 user=sub.user,
+#             )
+#             # Mark as notified to prevent duplicates
+#             sub.is_notified = True
+#             sub.save(update_fields=["is_notified"])
