@@ -36,10 +36,7 @@ DEBUG = DJANGO_ENV in ['LOCAL', 'STAGING']
 
 
 ALLOWED_HOSTS = [
-    '*.up.railway.app',
-    'localhost',
-    '127.0.0.1',
-    "35.212.153.31"
+    '*'
 ]
 
 CSRF_TRUSTED_ORIGINS = ["https://*.up.railway.app"]
