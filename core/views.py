@@ -53,7 +53,7 @@ class UserAdminViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     """Product endpoints (admin & public)."""
 
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().distinct()
     permission_classes = [RoleBasedSafeWritePermission]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_class = ProductFilter
@@ -142,8 +142,19 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
 
+    # def get_queryset(self):
+    #     queryset = Product.objects.all()
+    #     category = self.request.query_params.get("category")
+    #     if category:
+    #         queryset = queryset.filter(categories__name=category)
+    #     return queryset
+
     def get_queryset(self):
-        queryset = Product.objects.all()
+        queryset = (
+            Product.objects.all()
+            .prefetch_related("categories", "tags")
+            .distinct()
+        )
         category = self.request.query_params.get("category")
         if category:
             queryset = queryset.filter(categories__name=category)
