@@ -133,7 +133,7 @@ class Product(models.Model):
     
 class ProductVariant(models.Model):
     """Intermediate model for Product-Category many-to-many relationship"""
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="productvariants")
     category = models.CharField(max_length=20, choices=ProductCategoryChoices.choices)
     description = models.TextField(blank=True, null=True)
     stock = models.PositiveIntegerField(default=0)
@@ -146,7 +146,7 @@ class ProductVariant(models.Model):
         verbose_name_plural = 'Product Category Entries'
 
     def __str__(self):
-        return f"{self.product.name} in {self.category.name}"
+        return f"{self.product.name} in {self.get_category_display()}"
     
     @property 
     def savings(self):
@@ -219,12 +219,13 @@ class CartItem(models.Model):
     """Items in a shopping cart"""
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('cart', 'product')
+        unique_together = ('cart', 'product', 'variant')
         ordering = ['-updated_at']
 
     def __str__(self):
@@ -232,7 +233,10 @@ class CartItem(models.Model):
 
     @property
     def total_price(self):
-        return self.quantity * self.product.price
+        if self.variant:
+            unit_price = self.variant.offer_price if self.variant.offer_price else self.variant.original_price
+            return self.quantity * unit_price
+        return Decimal('0.00')
 
 
 class OrderStatusChoices(models.TextChoices):
@@ -272,6 +276,7 @@ class OrderItem(models.Model):
     """Items within an order - preserves product details at time of purchase"""
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at time of order
     created_at = models.DateTimeField(auto_now_add=True, null=True)
@@ -280,7 +285,8 @@ class OrderItem(models.Model):
         ordering = ['created_at']
 
     def __str__(self):
-        return f"Order #{self.order.id} - {self.product.name} (x{self.quantity})"
+        variant = f" ({self.variant.get_category_display()})" if self.variant else ""
+        return f"Order #{self.order.id} - {self.product.name} {variant} (x{self.quantity})"
 
     @property
     def total_price(self):

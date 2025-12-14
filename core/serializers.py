@@ -90,7 +90,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "thumbnail_url",
             "images"
         )
-        read_only_fields = ("id")
+        read_only_fields = ("id",)
 
     # def get_discount_percentage(self, obj):
     #     if obj.compare_at_price and obj.price < obj.compare_at_price:
@@ -127,6 +127,29 @@ class ProductSerializer(serializers.ModelSerializer):
             representation.pop('images', None)
             return representation
 
+class ProductVariantSerializer(serializers.ModelSerializer):
+    savings = serializers.ReadOnlyField()
+    discount_percentage = serializers.SerializerMethodField()
+    is_in_stock = serializers.BooleanField(read_only=True)
+    class Meta:
+        model = ProductVariant
+        fields = (
+            "id", 
+            "product", 
+            "category", 
+            "description", 
+            "stock", 
+            'original_price', 
+            'offer_price',
+            'savings',
+            'discount_percentage',
+            'is_in_stock'
+            )
+        read_only_fields = ("id",)
+
+    def get_discount_percentage(self, obj):
+        """Get discount percentage from model property"""
+        return obj.discount_percentage
 
 class ProductListSerializer(serializers.ModelSerializer):
     """Serializer for listing products (no images)"""
@@ -163,7 +186,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "image_url",
             "thumbnail_url",
         )
-        read_only_fields = ("id", "discount_percentage", "is_in_stock")
+        read_only_fields = ("id",)
 
     # def get_discount_percentage(self, obj):
     #     if obj.compare_at_price and obj.price < obj.compare_at_price:
@@ -191,6 +214,7 @@ class ProductListSerializer(serializers.ModelSerializer):
 class ProductDetailSerializer(ProductListSerializer):
     """Serializer for detail view (includes product images)"""
     images = ProductImageSerializer(many=True, read_only=True)
+    variants = ProductVariantSerializer(many=True, read_only=True, source="productvariants")
 
     class Meta(ProductListSerializer.Meta):
         fields = ProductListSerializer.Meta.fields + ("images",)
@@ -330,15 +354,19 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
+    variant = ProductVariantSerializer(read_only=True)
     total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
-        fields = ("id", "product", "quantity", "total_price")
+        fields = ("id", "product", "variant", "quantity", "total_price")
         read_only_fields = ("id", "total_price")
 
     def get_total_price(self, obj):
-        return obj.quantity * obj.product.price
+        if obj.variant:
+            unit_price = obj.variant.offer_price if obj.variant.offer_price else obj.variant.original_price 
+            return obj.quantity * unit_price
+        return 0
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -375,22 +403,3 @@ class AppNotificationSerializer(serializers.ModelSerializer):
             "is_read", "created_at", "read_at"
         ]
 
-class ProductVariantSerializer(serializers.ModelSerializer):
-    savings = serializers.ReadOnlyField()
-    discount_percentage = serializers.ReadOnlyField()
-    is_in_stock = serializers.BooleanField(read_only=True)
-    class Meta:
-        model = ProductVariant
-        fields = (
-            "id", 
-            "product", 
-            "category", 
-            "description", 
-            "stock", 
-            'original_price', 
-            'offer_price',
-            'savings',
-            'discount_percentage',
-            'is_in_stock'
-            )
-        read_only_fields = ("id",)
