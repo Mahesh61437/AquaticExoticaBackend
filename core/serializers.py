@@ -56,6 +56,9 @@ class ProductSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), write_only=True, source="category"
     )
+    variant = ProductVariantSerializer(read_only=True)
+    variant_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProductVariant.objects.all(), write_only=True, source="variant", required=False)
     images = ProductImageSerializer(many=True, read_only=True)
     # discount_percentage = serializers.SerializerMethodField()
     # is_in_stock = serializers.BooleanField(read_only=True)
@@ -66,12 +69,14 @@ class ProductSerializer(serializers.ModelSerializer):
     tag_details = TagSerializer(source='tags', many=True, read_only=True)
 
 
-    class Meta:
+    class Meta(ProductVariantSerializer.Meta):
         model = Product
         fields = (
             "id",
             "name",
             # "description",
+            # "variant",
+            # "variant_id",
             # "price",
             # "compare_at_price",
             # "discount_percentage",
@@ -89,7 +94,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "image_url",
             "thumbnail_url",
             "images"
-        )
+        ) + ProductVariantSerializer.Meta.fields
         read_only_fields = ("id",)
 
     # def get_discount_percentage(self, obj):
@@ -157,13 +162,16 @@ class ProductListSerializer(serializers.ModelSerializer):
     category_ids = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), many=True, write_only=True, source="categories"
     )
+    variant = ProductVariantSerializer(read_only=True)
+    variant_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProductVariant.objects.all(), write_only=True, source="variant", required=False)
     # discount_percentage = serializers.SerializerMethodField()
     # is_in_stock = serializers.BooleanField(read_only=True)
 
     tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
     tag_details = TagSerializer(source="tags", many=True, read_only=True)
 
-    class Meta:
+    class Meta(ProductVariantSerializer.Meta):
         model = Product
         fields = (
             "id",
@@ -185,7 +193,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             # "is_in_stock",
             "image_url",
             "thumbnail_url",
-        )
+        ) + ProductVariantSerializer.Meta.fields
         read_only_fields = ("id",)
 
     # def get_discount_percentage(self, obj):
