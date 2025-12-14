@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     Product, Category, ShippingAddress, Order, OrderItem,
-    ProductImage, Cart, CartItem, StockNotification, Tag, AppNotification
+    ProductImage, Cart, CartItem, StockNotification, Tag, AppNotification,
+    ProductVariant
 )
 
 User = get_user_model()
@@ -56,8 +57,8 @@ class ProductSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(), write_only=True, source="category"
     )
     images = ProductImageSerializer(many=True, read_only=True)
-    discount_percentage = serializers.SerializerMethodField()
-    is_in_stock = serializers.BooleanField(read_only=True)
+    # discount_percentage = serializers.SerializerMethodField()
+    # is_in_stock = serializers.BooleanField(read_only=True)
 
     tags = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all()
@@ -70,11 +71,11 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
-            "description",
-            "price",
-            "compare_at_price",
-            "discount_percentage",
-            "stock",
+            # "description",
+            # "price",
+            # "compare_at_price",
+            # "discount_percentage",
+            # "stock",
             "category",  # read-only
             "category_id",  # write-only
             'tags', 'tag_details',
@@ -84,17 +85,17 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_sale",
             "is_featured",
             "is_trending",
-            "is_in_stock",
+            # "is_in_stock",
             "image_url",
             "thumbnail_url",
             "images"
         )
-        read_only_fields = ("id", "discount_percentage", "is_in_stock")
+        read_only_fields = ("id")
 
-    def get_discount_percentage(self, obj):
-        if obj.compare_at_price and obj.price < obj.compare_at_price:
-            return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
-        return 0
+    # def get_discount_percentage(self, obj):
+    #     if obj.compare_at_price and obj.price < obj.compare_at_price:
+    #         return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
+    #     return 0
 
     def update(self, instance, validated_data):
         tags = validated_data.pop("tags", None)
@@ -133,8 +134,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     category_ids = serializers.PrimaryKeyRelatedField(
         queryset=Category.objects.all(), many=True, write_only=True, source="categories"
     )
-    discount_percentage = serializers.SerializerMethodField()
-    is_in_stock = serializers.BooleanField(read_only=True)
+    # discount_percentage = serializers.SerializerMethodField()
+    # is_in_stock = serializers.BooleanField(read_only=True)
 
     tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
     tag_details = TagSerializer(source="tags", many=True, read_only=True)
@@ -144,11 +145,11 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
-            "description",
-            "price",
-            "compare_at_price",
-            "discount_percentage",
-            "stock",
+            # "description",
+            # "price",
+            # "compare_at_price",
+            # "discount_percentage",
+            # "stock",
             "categories",      # read-only
             "category_ids",    # write-only
             "tags", "tag_details",
@@ -158,16 +159,16 @@ class ProductListSerializer(serializers.ModelSerializer):
             "is_sale",
             "is_featured",
             "is_trending",
-            "is_in_stock",
+            # "is_in_stock",
             "image_url",
             "thumbnail_url",
         )
         read_only_fields = ("id", "discount_percentage", "is_in_stock")
 
-    def get_discount_percentage(self, obj):
-        if obj.compare_at_price and obj.price < obj.compare_at_price:
-            return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
-        return 0
+    # def get_discount_percentage(self, obj):
+    #     if obj.compare_at_price and obj.price < obj.compare_at_price:
+    #         return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
+    #     return 0
 
     def update(self, instance, validated_data):
         tags = validated_data.pop("tags", None)
@@ -219,11 +220,15 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product_id = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all(), write_only=True
     )
+    variant = ProductVariantSerializer(read_only=True)
+    variant_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProductVariant.objects.all(), write_only=True, required=False
+    )
     total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ("id", "product", "product_id", "quantity", "price", "total_price")
+        fields = ("id", "product", "product_id", "variant", "variant_id", "quantity", "price", "total_price")
         read_only_fields = ("id", "total_price")
 
     def get_total_price(self, obj):
@@ -369,3 +374,23 @@ class AppNotificationSerializer(serializers.ModelSerializer):
             "id", "type", "title", "message", "data",
             "is_read", "created_at", "read_at"
         ]
+
+class ProductVariantSerializer(serializers.ModelSerializer):
+    savings = serializers.ReadOnlyField()
+    discount_percentage = serializers.ReadOnlyField()
+    is_in_stock = serializers.BooleanField(read_only=True)
+    class Meta:
+        model = ProductVariant
+        fields = (
+            "id", 
+            "product", 
+            "category", 
+            "description", 
+            "stock", 
+            'original_price', 
+            'offer_price',
+            'savings',
+            'discount_percentage',
+            'is_in_stock'
+            )
+        read_only_fields = ("id",)

@@ -33,6 +33,10 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+class ProductCategoryChoices(models.TextChoices):
+    Large = 'large', 'Large'
+    Medium = 'medium', 'Medium'
+    Small = 'small', 'Small'
 
 class ShippingAddress(models.Model):
     """User shipping addresses - users can have multiple addresses"""
@@ -91,14 +95,14 @@ class Category(models.Model):
 class Product(models.Model):
     """Product model with merchandising features"""
     name = models.TextField()
-    description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    # description = models.TextField() #TBD
+    # price = models.DecimalField(max_digits=10, decimal_places=2) #TBD
     image_url = models.URLField(max_length=1000, blank=True, null=True)
     thumbnail_url = models.URLField(max_length=1000, blank=True, null=True)
-    compare_at_price = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Original price before discount"
-    )
+    # compare_at_price = models.DecimalField(
+    #     max_digits=10, decimal_places=2, blank=True, null=True,
+    #     help_text="Original price before discount"
+    # )
     # supporting multiple categories for single product
     categories = models.ManyToManyField(Category, related_name='products', blank=True)
     rating = models.DecimalField(
@@ -110,7 +114,7 @@ class Product(models.Model):
     is_sale = models.BooleanField(default=False)
     is_featured = models.BooleanField(default=False)
     is_trending = models.BooleanField(default=False)
-    stock = models.PositiveIntegerField(default=0)
+    # stock = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -123,23 +127,46 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def is_in_stock(self):
-        """Check if product is available"""
-        return self.stock > 0 and self.is_active
-
-    @property
-    def discount_percentage(self):
-        """Calculate discount percentage if compare_at_price exists"""
-        if self.compare_at_price and self.compare_at_price > self.price:
-            return round(((self.compare_at_price - self.price) / self.compare_at_price) * 100)
-        return 0
-
     def get_tags_list(self):
         """Return tags as a list"""
         return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
+    
+class ProductVariant(models.Model):
+    """Intermediate model for Product-Category many-to-many relationship"""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    category = models.CharField(max_length=20, choices=ProductCategoryChoices.choices)
+    description = models.TextField(blank=True, null=True)
+    stock = models.PositiveIntegerField(default=0)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    offer_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
+    class Meta:
+        unique_together = ('product', 'category')
+        verbose_name = 'Product Category Entry'
+        verbose_name_plural = 'Product Category Entries'
 
+    def __str__(self):
+        return f"{self.product.name} in {self.category.name}"
+    
+    @property 
+    def savings(self):
+        '''Calculate saving amount if offer price exists'''
+        if self.original_price and self.offer_price:
+            return self.original_price - self.offer_price
+        return Decimal('0.00')
+    
+    @property
+    def discount_percentage(self):
+        """Calculate discount percentage if original_price exists"""
+        if self.original_price and self.original_price > self.offer_price:
+            return round(((self.original_price - self.offer_price) / self.original_price) * 100)
+        return 0
+    
+    @property
+    def is_in_stock(self):
+        """Check if product is available"""
+        return self.stock > 0 and self.product.is_active
+            
 class ImageTypeChoices(models.TextChoices):
     THUMBNAIL = 'thumbnail', 'Thumbnail'
     PRODUCT_IMAGE = 'product_image', 'Product Image'
