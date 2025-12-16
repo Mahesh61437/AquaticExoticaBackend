@@ -57,7 +57,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [RoleBasedSafeWritePermission]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_class = ProductFilter
-    search_fields = ["name", "description", "categories__name", "tags__name"]
+    search_fields = ["name", "productvariants__description", "categories__name", "tags__name"]
 
     def get_serializer_class(self):
         """Use different serializers for list and detail views"""
@@ -130,6 +130,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         qs = self.get_queryset().filter(
             models.Q(name__icontains=query)
+            | models.Q(productvariants__description__icontains=query) 
             | models.Q(categories__name__icontains=query)
             | models.Q(tags__name__icontains=query)
         ).distinct()
@@ -152,7 +153,12 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = (
             Product.objects.all()
-            .prefetch_related("categories", "tags")
+            .prefetch_related(
+                "categories", 
+                "tags",
+                "productvariants",
+                "images"
+                )
             .distinct()
         )
         category = self.request.query_params.get("category")
@@ -202,7 +208,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     """Customer and admin order endpoints."""
 
-    queryset = Order.objects.prefetch_related("items", "items__product").all()
+    queryset = Order.objects.prefetch_related("items", "items__product", "items__variant").all()
     serializer_class = OrderSerializer
     permission_classes = [RoleBasedSafeWritePermission]
 
@@ -338,7 +344,11 @@ class CartItemViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         logger.info(f"Fetching cart items for user: {self.request.user.username}")
-        return CartItem.objects.filter(cart__user=self.request.user)
+        return (
+            CartItem.objects
+            .filter(cart__user=self.request.user)
+            .select_related("product", "variant", "cart")
+        )
 
     def perform_create(self, serializer):
         logger.info(f"Adding item to cart for user: {self.request.user.username}")
@@ -352,9 +362,16 @@ class OrderItemViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         logger.info(f"Fetching order items for user: {self.request.user.username}")
+        qs = OrderItem.objects.select_related(
+            "order",
+            "product",
+            "variant",
+        )
+
         if self.request.user.is_staff:
-            return OrderItem.objects.all()
-        return OrderItem.objects.filter(order__user=self.request.user)
+            return qs
+
+        return qs.filter(order__user=self.request.user)
 
 
 class ShippingAddressViewSet(viewsets.ModelViewSet):
