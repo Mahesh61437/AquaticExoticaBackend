@@ -142,8 +142,7 @@ class ProductVariant(models.Model):
 
     class Meta:
         unique_together = ('product', 'category')
-        verbose_name = 'Product Category Entry'
-        verbose_name_plural = 'Product Category Entries'
+        verbose_name_plural = "ProductVariants"
 
     def __str__(self):
         return f"{self.product.name} in {self.get_category_display()}"
