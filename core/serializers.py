@@ -50,6 +50,29 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ("id", "image_url", "order", "created_at")
         read_only_fields = ("id", "created_at")
 
+class ProductVariantSerializer(serializers.ModelSerializer):
+    savings = serializers.ReadOnlyField()
+    discount_percentage = serializers.SerializerMethodField()
+    is_in_stock = serializers.BooleanField(read_only=True)
+    class Meta:
+        model = ProductVariant
+        fields = (
+            "id", 
+            "product", 
+            "category", 
+            "description", 
+            "stock", 
+            'original_price', 
+            'offer_price',
+            'savings',
+            'discount_percentage',
+            'is_in_stock'
+            )
+        read_only_fields = ("id",)
+
+    def get_discount_percentage(self, obj):
+        """Get discount percentage from model property"""
+        return obj.discount_percentage
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
@@ -94,7 +117,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "image_url",
             "thumbnail_url",
             "images",
-            "variants",
+            "variant",
         )
         read_only_fields = ("id",)
 
@@ -133,30 +156,6 @@ class ProductSerializer(serializers.ModelSerializer):
             representation.pop('images', None)
             return representation
 
-class ProductVariantSerializer(serializers.ModelSerializer):
-    savings = serializers.ReadOnlyField()
-    discount_percentage = serializers.SerializerMethodField()
-    is_in_stock = serializers.BooleanField(read_only=True)
-    class Meta:
-        model = ProductVariant
-        fields = (
-            "id", 
-            "product", 
-            "category", 
-            "description", 
-            "stock", 
-            'original_price', 
-            'offer_price',
-            'savings',
-            'discount_percentage',
-            'is_in_stock'
-            )
-        read_only_fields = ("id",)
-
-    def get_discount_percentage(self, obj):
-        """Get discount percentage from model property"""
-        return obj.discount_percentage
-
 class ProductListSerializer(serializers.ModelSerializer):
     """Serializer for listing products (no images)"""
     categories = CategorySerializer(many=True, read_only=True)
@@ -164,8 +163,8 @@ class ProductListSerializer(serializers.ModelSerializer):
         queryset=Category.objects.all(), many=True, write_only=True, source="categories"
     )
     variant = ProductVariantSerializer(many=True, read_only=True, source="productvariants")
-    variant_id = serializers.PrimaryKeyRelatedField(
-        queryset=ProductVariant.objects.all(), write_only=True, source="variant", required=False)
+    # variant_id = serializers.PrimaryKeyRelatedField(
+    #     queryset=ProductVariant.objects.all(), write_only=True, source="variant", required=False)
     # discount_percentage = serializers.SerializerMethodField()
     # is_in_stock = serializers.BooleanField(read_only=True)
 
@@ -194,7 +193,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             # "is_in_stock",
             "image_url",
             "thumbnail_url",
-            "variants"
+            "variant"
         )
         read_only_fields = ("id",)
 
@@ -346,6 +345,7 @@ class OrderSerializer(serializers.ModelSerializer):
             # Hence, we assign it to 'product' and use it directly when creating the OrderItem.
             product = item["product_id"]
             quantity = item["quantity"]
+            variant = item.get("variant_id", None)
             price = float(item["price"])
 
             total += quantity * price
@@ -353,6 +353,7 @@ class OrderSerializer(serializers.ModelSerializer):
             OrderItem.objects.create(
                 order=order,
                 product=product,
+                variant=variant,
                 quantity=quantity,
                 price=price
             )
