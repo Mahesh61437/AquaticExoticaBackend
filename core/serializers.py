@@ -97,7 +97,7 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
-            # "description",
+            "description",
             # "variant",
             # "variant_id",
             # "price",
@@ -145,6 +145,10 @@ class ProductSerializer(serializers.ModelSerializer):
         Override to_representation to include images only in detail view
         """
         representation = super().to_representation(instance)
+
+        # Exclude the variant to reduce the ayload size for orders
+        if self.context.get('exclude_variant'):
+            representation.pop('variant', None)
         
         # Check if this is a detail view (single object) or list view
         request = self.context.get('request')
@@ -154,7 +158,7 @@ class ProductSerializer(serializers.ModelSerializer):
         else:
             # This is a list view, remove images
             representation.pop('images', None)
-            return representation
+        return representation
 
 class ProductListSerializer(serializers.ModelSerializer):
     """Serializer for listing products (no images)"""
@@ -176,7 +180,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "name",
-            # "description",
+            "description",
             # "price",
             # "compare_at_price",
             # "discount_percentage",
@@ -267,6 +271,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
     def get_total_price(self, obj):
         return obj.quantity * obj.price  # Use stored price instead of product.price
 
+    def to_representation(self, instance):
+        self.fields.context['product']['exclude_variant'] = True
+        return super().to_representation(instance)
+    
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)  # now writeable

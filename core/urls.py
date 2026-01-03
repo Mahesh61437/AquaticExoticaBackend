@@ -2,7 +2,7 @@ from django.urls import path, include, re_path
 from rest_framework.routers import SimpleRouter
 
 from .views import (
-    ProductViewSet, CategoryViewSet, OrderViewSet,
+    ProductViewSet, CategoryViewSet, OrderViewSet,ProductVariantViewSet,
     ContactView, StockNotificationSubscribeView,
     StockNotificationNotifyView, UserAdminViewSet, TagViewSet, ShippingAddressViewSet, AppNotificationViewSet
 )
@@ -37,6 +37,7 @@ class OptionalSlashRouter(SimpleRouter):
 router = OptionalSlashRouter()
 router.register(r'users', UserAdminViewSet, basename='user')
 router.register(r'products', ProductViewSet, basename='product')
+router.register(r'product-variants', ProductVariantViewSet, basename='productvariant')
 router.register(r'categories', CategoryViewSet, basename='category')
 router.register(r'orders', OrderViewSet, basename='order')
 router.register(r'tags', TagViewSet, basename='tag')

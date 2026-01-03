@@ -13,10 +13,10 @@ from django.core.mail import send_mail, EmailMessage
 import logging
 
 from .filters import ProductFilter
-from .models import (Product, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag,
+from .models import (Product, ProductVariant, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag,
                      AppNotification, NotificationType)
 from .permissions import IsAdminOrReadOnly, RoleBasedSafeWritePermission
-from .serializers import (UserSerializer, ProductSerializer, OrderSerializer, CategorySerializer, CartSerializer,
+from .serializers import (UserSerializer, ProductSerializer, ProductVariantSerializer, OrderSerializer, CategorySerializer, CartSerializer,
                           CartItemSerializer, OrderItemSerializer, ShippingAddressSerializer,
                           StockNotificationSerializer, TagSerializer, ProductDetailSerializer, ProductListSerializer,
                           AppNotificationSerializer)
@@ -204,7 +204,14 @@ class CategoryViewSet(viewsets.ModelViewSet):
         # cache.delete('all_categories')
         instance.delete()
 
+class ProductVariantViewSet(viewsets.ModelViewSet):
+    '''ProductVariant endpoint'''
 
+    queryset = ProductVariant.objects.all()
+    serializer_class = ProductVariantSerializer
+    permission_classes = [RoleBasedSafeWritePermission]
+    
+    
 class OrderViewSet(viewsets.ModelViewSet):
     """Customer and admin order endpoints."""
 
