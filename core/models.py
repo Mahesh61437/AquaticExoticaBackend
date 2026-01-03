@@ -37,6 +37,10 @@ class ProductCategoryChoices(models.TextChoices):
     Large = 'large', 'Large'
     Medium = 'medium', 'Medium'
     Small = 'small', 'Small'
+    Pot = 'pot', 'Pot'
+    Clump = 'clump', 'Clump'
+    Rhizome = 'rhizome', 'Rhizome'
+    Plant = 'plant', 'Plant'
 
 
 class ShippingAddress(models.Model):
