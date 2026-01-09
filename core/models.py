@@ -165,18 +165,19 @@ class ProductImage(models.Model):
 class ProductVariant(models.Model):
     """Intermediate model for Product-Category many-to-many relationship"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="productvariants")
-    category = models.CharField(max_length=20, choices=ProductCategoryChoices.choices)
+    variant_type = models.CharField(max_length=20, choices=ProductCategoryChoices.choices)
     description = models.TextField(blank=True, null=True)
     stock = models.PositiveIntegerField(default=0)
     original_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     offer_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
 
     class Meta:
-        unique_together = ('product', 'category')
+        unique_together = ('product', 'variant_type')
         verbose_name_plural = "ProductVariants"
+        ordering = ['id']
 
     def __str__(self):
-        return f"{self.product.name} in {self.get_category_display()}"
+        return f"{self.product.name} in {self.get_variant_type_display()}"
     
     @property 
     def compare_at_price(self):

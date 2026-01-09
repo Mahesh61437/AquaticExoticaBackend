@@ -6,6 +6,7 @@ from django.utils.timezone import now
 from .models import (
     User,
     Product,
+    ProductVariant,
     Order,
     StockNotification,
     AppNotification, NotificationType,
@@ -99,17 +100,17 @@ def order_status_change_notification(sender, instance, **kwargs):
 # ----------------------------
 # 4. LOW STOCK ALERT
 # ----------------------------
-@receiver(post_save, sender=Product)
+@receiver(post_save, sender=ProductVariant)
 def low_stock_notification(sender, instance, **kwargs):
     LOW_STOCK_THRESHOLD = 5
     if instance.stock < LOW_STOCK_THRESHOLD:
         AppNotification.create_notification(
             notification_type=NotificationType.LOW_STOCK,
             title="Low Stock Alert",
-            message=f"Product '{instance.name}' is running low on stock ({instance.stock} left).",
+            message=f"Product '{instance.product.name}' is running low on stock ({instance.stock} left).",
             data={
                 "product_id": instance.id,
-                "product_name": instance.name,
+                "product_name": instance.product.name,
                 "stock": instance.stock,
             },
         )

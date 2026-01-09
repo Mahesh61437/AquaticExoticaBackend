@@ -60,9 +60,17 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "productvariants__description", "categories__name", "tags__name"]
 
     def get_serializer_class(self):
-        """Use different serializers for list and detail views"""
+        """Use different serializers for list, detail and write views.
+
+        Use `ProductSerializer` for create/update operations so nested writable
+        fields (variants, tags, category_id) are accepted. List views keep the
+        lighter `ProductListSerializer`.
+        """
+        print(f"debug: action={self.action}")
         if self.action == "retrieve":  # GET /products/<id>/
             return ProductDetailSerializer
+        if self.action in ("create", "update", "partial_update"):
+            return ProductSerializer
         return ProductListSerializer
 
     @action(detail=False, methods=["get"], url_path="featured")

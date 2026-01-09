@@ -332,20 +332,22 @@ JAZZMIN_UI_TWEAKS = {
 }
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only for development
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://aquaticexotica-production-88d0.up.railway.app",
-    "https://www.aquaticexotica.com",
-    "https://aquaticexotica.com",
-]
+# CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only for development
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+#     "https://aquaticexotica-production-88d0.up.railway.app",
+#     "https://www.aquaticexotica.com",
+#     "https://aquaticexotica.com",
+# ]
 
 # CORS regex patterns
-# CORS_ALLOWED_ORIGIN_REGEXES = [
-#     r"^https://aquaticexotica.*\.up\.railway\.app$",  # Matches any subdomain of aquaticexotica on railway
-#     r"^https://.*\.aquaticexotica\.com$",  # Matches any subdomain of aquaticexotica.com
-# ]
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://aquaticexotica.*\.up\.railway\.app$",  # Matches any subdomain of aquaticexotica on railway
+    r"^https://.*\.aquaticexotica\.com$",  # Matches any subdomain of aquaticexotica.com
+    r"^http://localhost:3000$",
+    r"^http://127\.0\.0\.1:3000$",
+]
 
 # Allow all headers and methods
 CORS_ALLOW_CREDENTIALS = True
