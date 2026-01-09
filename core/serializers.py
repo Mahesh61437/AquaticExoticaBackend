@@ -194,6 +194,35 @@ class ProductSerializer(serializers.ModelSerializer):
 
         return instance
 
+    def create(self, validated_data):
+        print(f"debug: validated_data={validated_data}")
+        tags = validated_data.pop("tags", None)
+        variants_data = validated_data.pop("productvariants", None)
+        images_data = validated_data.pop("images", None)
+
+        product = Product.objects.create(**validated_data)
+
+        if tags is not None:
+            product.tags.set(tags)
+
+        if variants_data is not None:
+            for vdata in variants_data:
+                ProductVariant.objects.create(product=product, **vdata)
+
+        if images_data is not None:
+            for img in images_data:
+                try:
+                    ProductImage.objects.create(
+                        product=product,
+                        image_url=img.get('image_url'),
+                        order=img.get('order', 0)
+                    )
+                except Exception:
+                    # skip invalid image entries
+                    continue
+
+        return product
+
     def to_representation(self, instance):
         """
         Override to_representation to include images only in detail view
