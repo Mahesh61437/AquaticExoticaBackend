@@ -44,9 +44,23 @@ class Migration(migrations.Migration):
             model_name='product',
             name='image_url',
         ),
+        # Clear unique_together BEFORE removing fields it references
         migrations.AlterUniqueTogether(
             name='stocknotification',
-            unique_together={('user', 'product')},
+            unique_together=set(),
+        ),
+        # Remove old stocknotification fields BEFORE adding new ones with conflicting names
+        migrations.RemoveField(
+            model_name='stocknotification',
+            name='email',
+        ),
+        migrations.RemoveField(
+            model_name='stocknotification',
+            name='product_id',
+        ),
+        migrations.RemoveField(
+            model_name='stocknotification',
+            name='product_name',
         ),
         migrations.AddField(
             model_name='cart',
@@ -69,6 +83,7 @@ class Migration(migrations.Migration):
             name='is_notified',
             field=models.BooleanField(default=False),
         ),
+        # Now add user and product fields (no conflict since product_id was removed)
         migrations.AddField(
             model_name='stocknotification',
             name='product',
@@ -80,6 +95,11 @@ class Migration(migrations.Migration):
             name='user',
             field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, related_name='stock_notifications', to=settings.AUTH_USER_MODEL),
             preserve_default=False,
+        ),
+        # Now set unique_together with the new fields
+        migrations.AlterUniqueTogether(
+            name='stocknotification',
+            unique_together={('user', 'product')},
         ),
         migrations.AlterField(
             model_name='cart',
@@ -118,18 +138,6 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='cart',
             name='quantity',
-        ),
-        migrations.RemoveField(
-            model_name='stocknotification',
-            name='email',
-        ),
-        migrations.RemoveField(
-            model_name='stocknotification',
-            name='product_id',
-        ),
-        migrations.RemoveField(
-            model_name='stocknotification',
-            name='product_name',
         ),
         migrations.CreateModel(
             name='CartItem',

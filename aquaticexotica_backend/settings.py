@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'authapp',
     'core',
+    'payments',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -434,4 +435,9 @@ SENDGRID_API_KEY = config("SENDGRID_API_KEY")
 # DEFAULT_FROM_EMAIL = 'no-reply@aquaticexotica.com'   # Verified in AWS SES
 
 
-
+# PayU Settings
+PAYU_MERCHANT_KEY = config('PAYU_MERCHANT_KEY', default='dummy_key')
+PAYU_MERCHANT_SALT = config('PAYU_MERCHANT_SALT', default='dummy_salt')
+PAYU_BASE_URL = config('PAYU_BASE_URL', default='https://test.payu.in/_payment')
+PAYU_SUCCESS_URL = config('PAYU_SUCCESS_URL', default='http://localhost:3000/payment/success')
+PAYU_FAILURE_URL = config('PAYU_FAILURE_URL', default='http://localhost:3000/payment/failure')
