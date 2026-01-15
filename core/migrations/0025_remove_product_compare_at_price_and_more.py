@@ -73,17 +73,17 @@ class Migration(migrations.Migration):
             unique_together={('cart', 'product', 'variant')},
         ),
 
-        # Now safe to remove product-level fields (price/compare_at_price/stock)
-        migrations.RemoveField(
-            model_name='product',
-            name='compare_at_price',
-        ),
-        migrations.RemoveField(
-            model_name='product',
-            name='price',
-        ),
-        migrations.RemoveField(
-            model_name='product',
-            name='stock',
-        ),
+        # # Now safe to remove product-level fields (price/compare_at_price/stock)
+        # migrations.RemoveField(
+        #     model_name='product',
+        #     name='compare_at_price',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='product',
+        #     name='price',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='product',
+        #     name='stock',
+        # ),
     ]

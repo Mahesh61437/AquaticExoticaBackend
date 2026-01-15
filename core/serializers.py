@@ -84,8 +84,8 @@ class ProductSerializer(serializers.ModelSerializer):
     # Nested variants are writable via the `productvariants` source. Each item may include `id` to update an existing variant
     variants = ProductVariantSerializer(many=True, required=False, source="productvariants")
     images = ProductImageSerializer(many=True, required=False)
-    # discount_percentage = serializers.SerializerMethodField()
-    # is_in_stock = serializers.BooleanField(read_only=True)
+    discount_percentage = serializers.SerializerMethodField()
+    is_in_stock = serializers.BooleanField(read_only=True)
 
     tags = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all(), required=False
@@ -99,12 +99,12 @@ class ProductSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "description",
+            "price",
+            "compare_at_price",
+            "discount_percentage",
+            "stock",
             # "variant",
             # "variant_id",
-            # "price",
-            # "compare_at_price",
-            # "discount_percentage",
-            # "stock",
             "category",  # read-only
             "category_id",  # write-only
             'tags', 'tag_details',
@@ -114,18 +114,18 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_sale",
             "is_featured",
             "is_trending",
-            # "is_in_stock",
+            "is_in_stock",
             "image_url",
             "thumbnail_url",
             "images",
             "variants",
         )
-        read_only_fields = ("id",)
+        read_only_fields = ("id", "discount_percentage", "is_in_stock")
 
-    # def get_discount_percentage(self, obj):
-    #     if obj.compare_at_price and obj.price < obj.compare_at_price:
-    #         return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
-    #     return 0
+    def get_discount_percentage(self, obj):
+        if obj.compare_at_price and obj.price < obj.compare_at_price:
+            return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
+        return 0
 
     def update(self, instance, validated_data):
         tags = validated_data.pop("tags", None)
@@ -252,8 +252,8 @@ class ProductListSerializer(serializers.ModelSerializer):
     variants = ProductVariantSerializer(many=True, read_only=True, source="productvariants")
     # variant_id = serializers.PrimaryKeyRelatedField(
     #     queryset=ProductVariant.objects.all(), write_only=True, source="variant", required=False)
-    # discount_percentage = serializers.SerializerMethodField()
-    # is_in_stock = serializers.BooleanField(read_only=True)
+    discount_percentage = serializers.SerializerMethodField()
+    is_in_stock = serializers.BooleanField(read_only=True)
 
     tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
     
@@ -266,10 +266,10 @@ class ProductListSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "price_range",
-            # "price",
-            # "compare_at_price",
-            # "discount_percentage",
-            # "stock",
+            "price",
+            "compare_at_price",
+            "discount_percentage",
+            "stock",
             "categories",      # read-only
             "category_ids",    # write-only
             "tags", "tag_details",
@@ -279,18 +279,18 @@ class ProductListSerializer(serializers.ModelSerializer):
             "is_sale",
             "is_featured",
             "is_trending",
-            # "is_in_stock",
+            "is_in_stock",
             "image_url",
             "images",
             "thumbnail_url",
             "variants"
         )
-        read_only_fields = ("id",)
+        read_only_fields = ("id", "discount_percentage", "is_in_stock")
 
-    # def get_discount_percentage(self, obj):
-    #     if obj.compare_at_price and obj.price < obj.compare_at_price:
-    #         return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
-    #     return 0
+    def get_discount_percentage(self, obj):
+        if obj.compare_at_price and obj.price < obj.compare_at_price:
+            return int(((obj.compare_at_price - obj.price) / obj.compare_at_price) * 100)
+        return 0
 
     def update(self, instance, validated_data):
         tags = validated_data.pop("tags", None)
@@ -488,10 +488,11 @@ class CartItemSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "total_price")
 
     def get_total_price(self, obj):
-        if obj.variants:
-            unit_price = obj.variants.offer_price if obj.variants.offer_price else obj.variants.original_price 
-            return obj.quantity * unit_price
-        return 0
+        return obj.quantity * obj.product.price
+        # if obj.variants:
+        #     unit_price = obj.variants.offer_price if obj.variants.offer_price else obj.variants.original_price 
+        #     return obj.quantity * unit_price
+        # return 0
 
 
 class CartSerializer(serializers.ModelSerializer):
