@@ -33,6 +33,15 @@ class Tag(models.Model):
     def __str__(self):
         return self.name
 
+class ProductCategoryChoices(models.TextChoices):
+    Large = 'large', 'Large'
+    Medium = 'medium', 'Medium'
+    Small = 'small', 'Small'
+    Pot = 'pot', 'Pot'
+    Clump = 'clump', 'Clump'
+    Rhizome = 'rhizome', 'Rhizome'
+    Plant = 'plant', 'Plant'
+
 
 class ShippingAddress(models.Model):
     """User shipping addresses - users can have multiple addresses"""
@@ -91,14 +100,14 @@ class Category(models.Model):
 class Product(models.Model):
     """Product model with merchandising features"""
     name = models.TextField()
-    description = models.TextField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    description = models.TextField() #TBD
+    # price = models.DecimalField(max_digits=10, decimal_places=2) #TBD
     image_url = models.URLField(max_length=1000, blank=True, null=True)
     thumbnail_url = models.URLField(max_length=1000, blank=True, null=True)
-    compare_at_price = models.DecimalField(
-        max_digits=10, decimal_places=2, blank=True, null=True,
-        help_text="Original price before discount"
-    )
+    # compare_at_price = models.DecimalField(
+    #     max_digits=10, decimal_places=2, blank=True, null=True,
+    #     help_text="Original price before discount"
+    # )
     # supporting multiple categories for single product
     categories = models.ManyToManyField(Category, related_name='products', blank=True)
     rating = models.DecimalField(
@@ -110,7 +119,7 @@ class Product(models.Model):
     is_sale = models.BooleanField(default=False)
     is_featured = models.BooleanField(default=False)
     is_trending = models.BooleanField(default=False)
-    stock = models.PositiveIntegerField(default=0)
+    # stock = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -123,23 +132,10 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-    @property
-    def is_in_stock(self):
-        """Check if product is available"""
-        return self.stock > 0 and self.is_active
-
-    @property
-    def discount_percentage(self):
-        """Calculate discount percentage if compare_at_price exists"""
-        if self.compare_at_price and self.compare_at_price > self.price:
-            return round(((self.compare_at_price - self.price) / self.compare_at_price) * 100)
-        return 0
-
     def get_tags_list(self):
         """Return tags as a list"""
         return [tag.strip() for tag in self.tags.split(',') if tag.strip()]
-
-
+                
 class ImageTypeChoices(models.TextChoices):
     THUMBNAIL = 'thumbnail', 'Thumbnail'
     PRODUCT_IMAGE = 'product_image', 'Product Image'
@@ -165,6 +161,42 @@ class ProductImage(models.Model):
     #         # Ensure only one primary image per product
     #         ProductImage.objects.filter(product=self.product, is_primary=True).update(is_primary=False)
     #     super().save(*args, **kwargs)
+
+class ProductVariant(models.Model):
+    """Intermediate model for Product-Category many-to-many relationship"""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="productvariants")
+    variant_type = models.CharField(max_length=20, choices=ProductCategoryChoices.choices)
+    description = models.TextField(blank=True, null=True)
+    stock = models.PositiveIntegerField(default=0)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    offer_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+
+    class Meta:
+        unique_together = ('product', 'variant_type')
+        verbose_name_plural = "ProductVariants"
+        ordering = ['id']
+
+    def __str__(self):
+        return f"{self.product.name} in {self.get_variant_type_display()}"
+    
+    @property 
+    def compare_at_price(self):
+        '''Calculate saving amount if offer price exists'''
+        if self.original_price and self.offer_price:
+            return self.original_price - self.offer_price
+        return Decimal('0.00')
+    
+    @property
+    def discount_percentage(self):
+        """Calculate discount percentage if original_price exists"""
+        if self.original_price and self.original_price > self.offer_price:
+            return round(((self.original_price - self.offer_price) / self.original_price) * 100)
+        return 0
+    
+    @property
+    def is_in_stock(self):
+        """Check if product is available"""
+        return self.stock > 0 and self.product.is_active
 
 
 class Cart(models.Model):
@@ -192,12 +224,13 @@ class CartItem(models.Model):
     """Items in a shopping cart"""
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('cart', 'product')
+        unique_together = ('cart', 'product', 'variant')
         ordering = ['-updated_at']
 
     def __str__(self):
@@ -205,7 +238,10 @@ class CartItem(models.Model):
 
     @property
     def total_price(self):
-        return self.quantity * self.product.price
+        if self.variant:
+            unit_price = self.variant.offer_price if self.variant.offer_price else self.variant.original_price
+            return self.quantity * unit_price
+        return Decimal('0.00')
 
 
 class OrderStatusChoices(models.TextChoices):
@@ -245,6 +281,7 @@ class OrderItem(models.Model):
     """Items within an order - preserves product details at time of purchase"""
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey(ProductVariant, on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)  # Price at time of order
     created_at = models.DateTimeField(auto_now_add=True, null=True)
@@ -253,7 +290,8 @@ class OrderItem(models.Model):
         ordering = ['created_at']
 
     def __str__(self):
-        return f"Order #{self.order.id} - {self.product.name} (x{self.quantity})"
+        variant = f" ({self.variant.get_category_display()})" if self.variant else ""
+        return f"Order #{self.order.id} - {self.product.name} {variant} (x{self.quantity})"
 
     @property
     def total_price(self):

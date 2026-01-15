@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import (
     Product, Category, ShippingAddress, Order, OrderItem,
-    ProductImage, Cart, CartItem, StockNotification, Tag, AppNotification
+    ProductImage, Cart, CartItem, StockNotification, Tag, AppNotification,
+    ProductVariant
 )
 
 User = get_user_model()
@@ -49,18 +50,45 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ("id", "image_url", "order", "created_at")
         read_only_fields = ("id", "created_at")
 
+class ProductVariantSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False)
+    product = serializers.PrimaryKeyRelatedField(read_only=True)
+    savings = serializers.ReadOnlyField()
+    discount_percentage = serializers.SerializerMethodField()
+    is_in_stock = serializers.BooleanField(read_only=True)
+    class Meta:
+        model = ProductVariant
+        fields = (
+            "id", 
+            "product", 
+            "variant_type", 
+            "description", 
+            "stock", 
+            'original_price', 
+            'offer_price',
+            'savings',
+            'discount_percentage',
+            'is_in_stock'
+            )
+        # id is accepted as input when updating existing variants; product is set by the parent serializer
+
+    def get_discount_percentage(self, obj):
+        """Get discount percentage from model property"""
+        return obj.discount_percentage
 
 class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     category_id = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), write_only=True, source="category"
+        queryset=Category.objects.all(), write_only=True, source="category", required=False
     )
-    images = ProductImageSerializer(many=True, read_only=True)
+    # Nested variants are writable via the `productvariants` source. Each item may include `id` to update an existing variant
+    variants = ProductVariantSerializer(many=True, required=False, source="productvariants")
+    images = ProductImageSerializer(many=True, required=False)
     discount_percentage = serializers.SerializerMethodField()
     is_in_stock = serializers.BooleanField(read_only=True)
 
     tags = serializers.PrimaryKeyRelatedField(
-        many=True, queryset=Tag.objects.all()
+        many=True, queryset=Tag.objects.all(), required=False
     )
     tag_details = TagSerializer(source='tags', many=True, read_only=True)
 
@@ -75,6 +103,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "compare_at_price",
             "discount_percentage",
             "stock",
+            # "variant",
+            # "variant_id",
             "category",  # read-only
             "category_id",  # write-only
             'tags', 'tag_details',
@@ -87,7 +117,8 @@ class ProductSerializer(serializers.ModelSerializer):
             "is_in_stock",
             "image_url",
             "thumbnail_url",
-            "images"
+            "images",
+            "variants",
         )
         read_only_fields = ("id", "discount_percentage", "is_in_stock")
 
@@ -98,6 +129,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         tags = validated_data.pop("tags", None)
+        variants_data = validated_data.pop("productvariants", None)
+        images_data = validated_data.pop("images", None)
 
         # Update all regular fields
         for attr, value in validated_data.items():
@@ -108,7 +141,87 @@ class ProductSerializer(serializers.ModelSerializer):
         if tags is not None:
             instance.tags.set(tags)
 
+        # Handle nested product variants (create/update/delete to match provided list)
+        if variants_data is not None:
+            existing = {v.id: v for v in instance.productvariants.all()}
+            incoming_ids = []
+
+            for vdata in variants_data:
+                v_id = vdata.get('id')
+                if v_id:
+                    variant = existing.get(v_id)
+                    if not variant:
+                        try:
+                            variant = ProductVariant.objects.get(id=v_id, product=instance)
+                        except ProductVariant.DoesNotExist:
+                            # skip invalid id
+                            continue
+                    # update fields on the existing variant
+                    for key, val in vdata.items():
+                        if key == 'id':
+                            continue
+                        setattr(variant, key, val)
+                    variant.save()
+                    incoming_ids.append(variant.id)
+                else:
+                    # create or update by variant_type
+                    vt = vdata.get('variant_type')
+                    defaults = {k: v for k, v in vdata.items() if k not in ('variant_type', 'id')}
+                    variant, created = ProductVariant.objects.update_or_create(
+                        product=instance, variant_type=vt, defaults=defaults
+                    )
+                    incoming_ids.append(variant.id)
+
+            # remove variants that were not included in the new payload
+            for v in instance.productvariants.all():
+                if v.id not in incoming_ids:
+                    v.delete()
+
+        # Replace product images if provided: simpler approach — remove all and recreate
+        if images_data is not None:
+            # delete existing images
+            instance.images.all().delete()
+            for img in images_data:
+                try:
+                    ProductImage.objects.create(
+                        product=instance,
+                        image_url=img.get('image_url'),
+                        order=img.get('order', 0)
+                    )
+                except Exception:
+                    # skip invalid image entries
+                    continue
+
         return instance
+
+    def create(self, validated_data):
+        print(f"debug: validated_data={validated_data}")
+        tags = validated_data.pop("tags", None)
+        variants_data = validated_data.pop("productvariants", None)
+        images_data = validated_data.pop("images", None)
+
+        product = Product.objects.create(**validated_data)
+
+        if tags is not None:
+            product.tags.set(tags)
+
+        if variants_data is not None:
+            for vdata in variants_data:
+                ProductVariant.objects.create(product=product, **vdata)
+
+        if images_data is not None:
+            for img in images_data:
+                try:
+                    ProductImage.objects.create(
+                        product=product,
+                        image_url=img.get('image_url'),
+                        order=img.get('order', 0)
+                    )
+                except Exception:
+                    # skip invalid image entries
+                    continue
+
+        return product
 
     def to_representation(self, instance):
         """
@@ -124,19 +237,26 @@ class ProductSerializer(serializers.ModelSerializer):
         else:
             # This is a list view, remove images
             representation.pop('images', None)
-            return representation
-
+        return representation
+    
 
 class ProductListSerializer(serializers.ModelSerializer):
     """Serializer for listing products (no images)"""
     categories = CategorySerializer(many=True, read_only=True)
     category_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Category.objects.all(), many=True, write_only=True, source="categories"
+        queryset=Category.objects.all(), many=True, write_only=True, source="categories", required=False
     )
+    images = ProductImageSerializer(many=True, read_only=True)
+    price_range = serializers.SerializerMethodField(read_only=True)
+
+    variants = ProductVariantSerializer(many=True, read_only=True, source="productvariants")
+    # variant_id = serializers.PrimaryKeyRelatedField(
+    #     queryset=ProductVariant.objects.all(), write_only=True, source="variant", required=False)
     discount_percentage = serializers.SerializerMethodField()
     is_in_stock = serializers.BooleanField(read_only=True)
 
     tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
+    
     tag_details = TagSerializer(source="tags", many=True, read_only=True)
 
     class Meta:
@@ -145,6 +265,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "description",
+            "price_range",
             "price",
             "compare_at_price",
             "discount_percentage",
@@ -160,7 +281,9 @@ class ProductListSerializer(serializers.ModelSerializer):
             "is_trending",
             "is_in_stock",
             "image_url",
+            "images",
             "thumbnail_url",
+            "variants"
         )
         read_only_fields = ("id", "discount_percentage", "is_in_stock")
 
@@ -185,14 +308,39 @@ class ProductListSerializer(serializers.ModelSerializer):
             instance.categories.set(categories)
 
         return instance
+    
+    def get_price_range(self, obj):
+        """Get price range from model property"""
+        prices = []
+        
+        for item in obj.productvariants.all():
+            if item.offer_price is not None and item.original_price is not None:
+                prices.append(min(item.offer_price, item.original_price))
+            elif item.offer_price is not None:
+                prices.append(item.offer_price)
+            elif item.original_price is not None:
+                prices.append(item.original_price)
+        if not prices:
+            return ""
+        if min(prices) == max(prices):
+            return f'₹{min(prices)}'
+        
+        return f'₹{min(prices)} - ₹{max(prices)}'
 
 
 class ProductDetailSerializer(ProductListSerializer):
-    """Serializer for detail view (includes product images)"""
+    """Serializer for detail view (includes product images and variants)"""
     images = ProductImageSerializer(many=True, read_only=True)
+    variants = ProductVariantSerializer(many=True, read_only=True, source="productvariants")
 
     class Meta(ProductListSerializer.Meta):
-        fields = ProductListSerializer.Meta.fields + ("images",)
+        fields = ProductListSerializer.Meta.fields + ("images", "variants")
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        if representation.get('price_range'):
+            representation.pop('price_range')
+        return representation
 
 
 class ShippingAddressSerializer(serializers.ModelSerializer):
@@ -219,16 +367,20 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product_id = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all(), write_only=True
     )
+    variants = ProductVariantSerializer(read_only=True)
+    variant_id = serializers.PrimaryKeyRelatedField(
+        queryset=ProductVariant.objects.all(), write_only=True, required=False
+    )
     total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = OrderItem
-        fields = ("id", "product", "product_id", "quantity", "price", "total_price")
+        fields = ("id", "product", "product_id", "variants", "variant_id", "quantity", "price", "total_price")
         read_only_fields = ("id", "total_price")
 
     def get_total_price(self, obj):
         return obj.quantity * obj.price  # Use stored price instead of product.price
-
+    
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)  # now writeable
@@ -307,6 +459,7 @@ class OrderSerializer(serializers.ModelSerializer):
             # Hence, we assign it to 'product' and use it directly when creating the OrderItem.
             product = item["product_id"]
             quantity = item["quantity"]
+            variant = item.get("variant_id", None)
             price = float(item["price"])
 
             total += quantity * price
@@ -314,6 +467,7 @@ class OrderSerializer(serializers.ModelSerializer):
             OrderItem.objects.create(
                 order=order,
                 product=product,
+                variant=variant,
                 quantity=quantity,
                 price=price
             )
@@ -325,15 +479,20 @@ class OrderSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)
+    variants = ProductVariantSerializer(read_only=True)
     total_price = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
-        fields = ("id", "product", "quantity", "total_price")
+        fields = ("id", "product", "variants", "quantity", "total_price")
         read_only_fields = ("id", "total_price")
 
     def get_total_price(self, obj):
         return obj.quantity * obj.product.price
+        # if obj.variants:
+        #     unit_price = obj.variants.offer_price if obj.variants.offer_price else obj.variants.original_price 
+        #     return obj.quantity * unit_price
+        # return 0
 
 
 class CartSerializer(serializers.ModelSerializer):
@@ -369,3 +528,4 @@ class AppNotificationSerializer(serializers.ModelSerializer):
             "id", "type", "title", "message", "data",
             "is_read", "created_at", "read_at"
         ]
+
