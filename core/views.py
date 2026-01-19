@@ -392,6 +392,65 @@ class CartViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(cart)
         return Response(serializer.data)
 
+    @action(detail=False, methods=["post"], url_path="items")
+    def add_item(self, request):
+        """
+        POST /api/cart/items/ - Add or update a cart item
+        Body: {"product": 46, "variant": 52, "quantity": 2}
+        If item already exists, quantity is updated.
+        """
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        product_id = request.data.get("product")
+        variant_id = request.data.get("variant")
+        quantity = request.data.get("quantity", 1)
+
+        if not product_id:
+            return Response({"error": "Product ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Product.objects.get(id=product_id)
+            variant = ProductVariant.objects.get(id=variant_id) if variant_id else None
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except ProductVariant.DoesNotExist:
+            return Response({"error": "Variant not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Update existing or create new
+        cart_item, created = CartItem.objects.update_or_create(
+            cart=cart,
+            product=product,
+            variant=variant,
+            defaults={"quantity": quantity}
+        )
+
+        serializer = self.get_serializer(cart)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    @action(detail=False, methods=["delete"], url_path="items")
+    def remove_item(self, request):
+        """
+        DELETE /api/cart/items/ - Remove item by product/variant
+        Body: {"product": 46, "variant": 52}
+        """
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        product_id = request.data.get("product")
+        variant_id = request.data.get("variant")
+
+        if not product_id:
+            return Response({"error": "Product ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        filters = {"cart": cart, "product_id": product_id}
+        if variant_id:
+            filters["variant_id"] = variant_id
+
+        deleted, _ = CartItem.objects.filter(**filters).delete()
+        
+        if deleted == 0:
+            return Response({"error": "Cart item not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = self.get_serializer(cart)
+        return Response(serializer.data)
+
 
 class CartItemViewSet(viewsets.ModelViewSet):
     serializer_class = CartItemSerializer
