@@ -362,12 +362,20 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
 
+# Minimal product serializer for order items (no tags, variants, etc.)
+class OrderItemProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ("id", "name", "image_url", "thumbnail_url")
+        read_only_fields = fields
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=True)
+    product = OrderItemProductSerializer(read_only=True)
     product_id = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all(), write_only=True
     )
-    variants = ProductVariantSerializer(read_only=True)
+    variant = ProductVariantSerializer(read_only=True)
     variant_id = serializers.PrimaryKeyRelatedField(
         queryset=ProductVariant.objects.all(), write_only=True, required=False
     )
@@ -375,7 +383,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ("id", "product", "product_id", "variants", "variant_id", "quantity", "price", "total_price")
+        fields = ("id", "product", "product_id", "variant", "variant_id", "quantity", "price", "total_price")
         read_only_fields = ("id", "total_price")
 
     def get_total_price(self, obj):

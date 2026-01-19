@@ -46,8 +46,15 @@ router.register(r'app_notifications', AppNotificationViewSet, basename='app_noti
 router.register(r'cart', CartViewSet, basename='cart')
 
 urlpatterns = [
+    # Explicit PUT /cart/ route (without ID) - must come before router to take precedence
+    # This enables PUT on collection endpoint which router doesn't support
+    re_path(r'^cart/?$', CartViewSet.as_view({'put': 'update', 'get': 'list'}), name='cart-update'),
+    
+    # Router provides all other methods (GET, POST, DELETE on cart/<id>/, etc.)
     path('', include(router.urls)),
+    
     re_path(r'^contact/?$', ContactView.as_view(), name='contact'),
     re_path(r'^stock-notifications/subscribe/?$', StockNotificationSubscribeView.as_view(), name='stock_subscribe'),
     re_path(r'^stock-notifications/notify/?$', StockNotificationNotifyView.as_view(), name='stock_notify'),
 ]
+

@@ -352,6 +352,46 @@ class CartViewSet(viewsets.ModelViewSet):
         logger.info(f"Creating cart for user: {self.request.user.username}")
         return serializer.save(user=self.request.user)
 
+    def list(self, request, *args, **kwargs):
+        """GET /api/cart/ - Returns the user's cart (creates one if doesn't exist)"""
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        serializer = self.get_serializer(cart)
+        return Response(serializer.data)
+
+    def update(self, request, *args, **kwargs):
+        """
+        PUT /api/cart/ - Replace all cart items
+        Body: {"items": [{"product": 46, "variant": 52, "quantity": 10}, ...]}
+        """
+        cart, _ = Cart.objects.get_or_create(user=request.user)
+        items_data = request.data.get("items", [])
+        
+        # Clear existing cart items
+        cart.items.all().delete()
+        
+        # Add new items
+        for item in items_data:
+            product_id = item.get("product")
+            variant_id = item.get("variant")
+            quantity = item.get("quantity", 1)
+            
+            try:
+                product = Product.objects.get(id=product_id)
+                variant = ProductVariant.objects.get(id=variant_id) if variant_id else None
+                
+                CartItem.objects.create(
+                    cart=cart,
+                    product=product,
+                    variant=variant,
+                    quantity=quantity
+                )
+            except (Product.DoesNotExist, ProductVariant.DoesNotExist) as e:
+                logger.warning(f"Invalid product/variant in cart update: {e}")
+                continue
+        
+        serializer = self.get_serializer(cart)
+        return Response(serializer.data)
+
 
 class CartItemViewSet(viewsets.ModelViewSet):
     serializer_class = CartItemSerializer

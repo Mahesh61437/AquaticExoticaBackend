@@ -8,6 +8,7 @@ from .models import (
     Product,
     ProductVariant,
     Order,
+    Cart,
     StockNotification,
     AppNotification, NotificationType,
 )
@@ -19,6 +20,10 @@ from .models import (
 @receiver(post_save, sender=User)
 def user_signup_notification(sender, instance, created, **kwargs):
     if created:
+        # Create default cart for user
+        Cart.objects.get_or_create(user=instance)
+        
+        # Create admin notification
         AppNotification.create_notification(
             notification_type=NotificationType.USER_SIGNUP,
             title="New User Registration",
@@ -29,6 +34,7 @@ def user_signup_notification(sender, instance, created, **kwargs):
                 "user_name": instance.full_name,
             },
         )
+
 
 
 # ----------------------------
