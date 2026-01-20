@@ -252,6 +252,93 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(order)
         return Response(serializer.data)
 
+    @action(detail=True, methods=["post"], url_path="items", permission_classes=[IsAdminUser])
+    def add_item(self, request, pk=None):
+        """
+        POST /api/orders/<order_id>/items/ - Add item to order (Admin only)
+        Body: {"product": 46, "variant": 52, "quantity": 2, "price": "18.00"}
+        """
+        order = self.get_object()
+        product_id = request.data.get("product")
+        variant_id = request.data.get("variant")
+        quantity = request.data.get("quantity", 1)
+        price = request.data.get("price")
+
+        if not product_id or not price:
+            return Response({"error": "Product ID and price are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Product.objects.get(id=product_id)
+            variant = ProductVariant.objects.get(id=variant_id) if variant_id else None
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        except ProductVariant.DoesNotExist:
+            return Response({"error": "Variant not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Create or update order item
+        order_item, created = OrderItem.objects.update_or_create(
+            order=order,
+            product=product,
+            variant=variant,
+            defaults={"quantity": quantity, "price": price}
+        )
+
+        # Recalculate order total
+        order.total_amount = sum(item.quantity * item.price for item in order.items.all())
+        order.save()
+
+        serializer = self.get_serializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    @action(detail=True, methods=["patch"], url_path="items/(?P<item_id>[^/.]+)", permission_classes=[IsAdminUser])
+    def update_item(self, request, pk=None, item_id=None):
+        """
+        PATCH /api/orders/<order_id>/items/<item_id>/ - Update order item (Admin only)
+        Body: {"quantity": 5, "price": "20.00"}
+        """
+        order = self.get_object()
+        
+        try:
+            order_item = OrderItem.objects.get(id=item_id, order=order)
+        except OrderItem.DoesNotExist:
+            return Response({"error": "Order item not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        quantity = request.data.get("quantity")
+        price = request.data.get("price")
+
+        if quantity is not None:
+            order_item.quantity = quantity
+        if price is not None:
+            order_item.price = price
+        order_item.save()
+
+        # Recalculate order total
+        order.total_amount = sum(item.quantity * item.price for item in order.items.all())
+        order.save()
+
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["delete"], url_path="items/(?P<item_id>[^/.]+)", permission_classes=[IsAdminUser])
+    def remove_item(self, request, pk=None, item_id=None):
+        """
+        DELETE /api/orders/<order_id>/items/<item_id>/ - Remove item from order (Admin only)
+        """
+        order = self.get_object()
+        
+        try:
+            order_item = OrderItem.objects.get(id=item_id, order=order)
+            order_item.delete()
+        except OrderItem.DoesNotExist:
+            return Response({"error": "Order item not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Recalculate order total
+        order.total_amount = sum(item.quantity * item.price for item in order.items.all())
+        order.save()
+
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)
+
 
 class ContactView(APIView):
     permission_classes = [AllowAny]
