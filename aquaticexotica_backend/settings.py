@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
+    'payments',
     # 'django_aws_ses',
 ]
 
@@ -434,6 +435,19 @@ SENDGRID_API_KEY = config("SENDGRID_API_KEY")
 #
 # EMAIL_BACKEND = config("EMAIL_BACKEND", default='django_aws_ses.backends.SESBackend')
 # DEFAULT_FROM_EMAIL = 'no-reply@aquaticexotica.com'   # Verified in AWS SES
+
+# ------------ Frontend URL Configuration -------------------
+# Base URL for frontend - change per environment (staging, QA, production)
+FRONTEND_BASE_URL = config('FRONTEND_BASE_URL', default='http://localhost:3000')
+
+# ------------ PayU Payment Gateway Configuration -------------------
+PAYU_MERCHANT_KEY = config('PAYU_MERCHANT_KEY', default='')
+PAYU_MERCHANT_SALT = config('PAYU_MERCHANT_SALT', default='')
+PAYU_MODE = config('PAYU_MODE', default='sandbox')
+PAYU_BASE_URL = 'https://secure.payu.in/_payment' if PAYU_MODE == 'production' else 'https://test.payu.in/_payment'
+# PayU redirect URLs - constructed from FRONTEND_BASE_URL
+PAYU_SUCCESS_URL = config('PAYU_SUCCESS_URL', default=f'{FRONTEND_BASE_URL}/payment/success')
+PAYU_FAILURE_URL = config('PAYU_FAILURE_URL', default=f'{FRONTEND_BASE_URL}/payment/failure')
 
 
 

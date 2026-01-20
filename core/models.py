@@ -174,6 +174,7 @@ class ProductImage(models.Model):
     #         ProductImage.objects.filter(product=self.product, is_primary=True).update(is_primary=False)
     #     super().save(*args, **kwargs)
 
+
 class ProductVariant(models.Model):
     """Intermediate model for Product-Category many-to-many relationship"""
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="productvariants")
@@ -258,6 +259,9 @@ class CartItem(models.Model):
 
 class OrderStatusChoices(models.TextChoices):
     PENDING = 'pending', 'Pending'
+    PAYMENT_PENDING = 'payment_pending', 'Payment Pending'
+    PAYMENT_FAILED = 'payment_failed', 'Payment Failed'
+    PAYMENT_SUCCESS = 'payment_success', 'Payment Success'
     PROCESSING = 'processing', 'Processing'
     SHIPPED = 'shipped', 'Shipped'
     DELIVERED = 'delivered', 'Delivered'

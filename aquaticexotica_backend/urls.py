@@ -40,6 +40,9 @@ urlpatterns = [
     # Auth routes
     path("api/auth/", include("authapp.urls")),
 
+    # Payments routes
+    path("api/payments/", include("payments.urls")),
+
     # Health checks
     path("api/health", api_health),
     path("health", api_health),
