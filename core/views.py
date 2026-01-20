@@ -284,7 +284,10 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
 
         # Recalculate order total
-        order.total_amount = sum(item.quantity * item.price for item in order.items.all())
+        from decimal import Decimal
+        order.total_amount = sum(
+            (Decimal(str(item.quantity)) * item.price) for item in order.items.all()
+        ) or Decimal('0.00')
         order.save()
 
         serializer = self.get_serializer(order)
@@ -315,8 +318,12 @@ class OrderViewSet(viewsets.ModelViewSet):
                 order_item.price = price
             order_item.save()
 
-        # Recalculate order total
-        order.total_amount = sum(item.quantity * item.price for item in order.items.all())
+        # Refresh order from DB and recalculate total
+        order.refresh_from_db()
+        from decimal import Decimal
+        order.total_amount = sum(
+            (Decimal(str(item.quantity)) * item.price) for item in order.items.all()
+        ) or Decimal('0.00')
         order.save()
 
         serializer = self.get_serializer(order)
