@@ -290,11 +290,11 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(order)
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
-    @action(detail=True, methods=["patch"], url_path="items/(?P<item_id>[^/.]+)", permission_classes=[IsAdminUser])
-    def update_item(self, request, pk=None, item_id=None):
+    @action(detail=True, methods=["patch", "delete"], url_path="items/(?P<item_id>[^/.]+)", permission_classes=[IsAdminUser])
+    def manage_item(self, request, pk=None, item_id=None):
         """
         PATCH /api/orders/<order_id>/items/<item_id>/ - Update order item (Admin only)
-        Body: {"quantity": 5, "price": "20.00"}
+        DELETE /api/orders/<order_id>/items/<item_id>/ - Remove order item (Admin only)
         """
         order = self.get_object()
         
@@ -303,34 +303,17 @@ class OrderViewSet(viewsets.ModelViewSet):
         except OrderItem.DoesNotExist:
             return Response({"error": "Order item not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        quantity = request.data.get("quantity")
-        price = request.data.get("price")
-
-        if quantity is not None:
-            order_item.quantity = quantity
-        if price is not None:
-            order_item.price = price
-        order_item.save()
-
-        # Recalculate order total
-        order.total_amount = sum(item.quantity * item.price for item in order.items.all())
-        order.save()
-
-        serializer = self.get_serializer(order)
-        return Response(serializer.data)
-
-    @action(detail=True, methods=["delete"], url_path="items/(?P<item_id>[^/.]+)", permission_classes=[IsAdminUser])
-    def remove_item(self, request, pk=None, item_id=None):
-        """
-        DELETE /api/orders/<order_id>/items/<item_id>/ - Remove item from order (Admin only)
-        """
-        order = self.get_object()
-        
-        try:
-            order_item = OrderItem.objects.get(id=item_id, order=order)
+        if request.method == "DELETE":
             order_item.delete()
-        except OrderItem.DoesNotExist:
-            return Response({"error": "Order item not found"}, status=status.HTTP_404_NOT_FOUND)
+        else:  # PATCH
+            quantity = request.data.get("quantity")
+            price = request.data.get("price")
+
+            if quantity is not None:
+                order_item.quantity = quantity
+            if price is not None:
+                order_item.price = price
+            order_item.save()
 
         # Recalculate order total
         order.total_amount = sum(item.quantity * item.price for item in order.items.all())
