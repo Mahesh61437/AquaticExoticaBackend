@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Order Confirmation</title>
+</head>
+
+<body style="margin:0; padding:0; font-family: Arial, sans-serif; background:#f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5; padding:20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff; border-radius:6px; padding:24px;">
+          
+          <!-- Header -->
+          <tr>
+            <td align="center" style="padding-bottom:20px;">
+              <h2 style="margin:0; color:#2e7d32;">New order received!</h2>
+              <p style="margin:8px 0 0; color:#555;">
+                Order #{{ order.id }} has been successfully created
+              </p>
+            </td>
+          </tr>
+
+          <!-- Order details -->
+          <tr>
+            <td style="padding-top:20px;">
+              <h3 style="margin-bottom:8px;">Order Details</h3>
+              <p style="margin:4px 0;"><strong>Customer:</strong> {{ order.user.full_name }}</p>
+              <p style="margin:4px 0;"><strong>Email:</strong> {{ order.user.email }}</p>
+              <p style="margin:4px 0;"><strong>Order Date:</strong> {{ order.created_at }}</p>
+              <p style="margin:4px 0;"><strong>Status:</strong> {{ order.status }}</p>
+            </td>
+          </tr>
+
+          <!-- Shipping address -->
+          <tr>
+            <td style="padding-top:16px;">
+              <h3 style="margin-bottom:8px;">Shipping Address</h3>
+              <p style="margin:4px 0;">{{ order.shipping_address.recipient_name }}</p>
+              <p style="margin:4px 0;">{{ order.shipping_address.address_line_1 }}</p>
+              {% if order.shipping_address.address_line_2 %}
+                <p style="margin:4px 0;">{{ order.shipping_address.address_line_2 }}</p>
+              {% endif %}
+              <p style="margin:4px 0;">
+                {{ order.shipping_address.city }},
+                {{ order.shipping_address.state }}
+                {{ order.shipping_address.zip_code }}
+              </p>
+              <p style="margin:4px 0;">{{ order.shipping_address.country }}</p>
+              <p style="margin:4px 0;">Phone: {{ order.shipping_address.recipient_phone }}</p>
+            </td>
+          </tr>
+
+          <!-- Items -->
+          <tr>
+            <td style="padding-top:20px;">
+              <h3 style="margin-bottom:8px;">Order Items</h3>
+              <table width="100%" cellpadding="6" cellspacing="0" border="1" style="border-collapse:collapse;">
+                <tr style="background:#f0f0f0;">
+                  <th align="left">Product</th>
+                  <th align="center">Variant</th>
+                  <th align="center">Qty</th>
+                  <th align="center">image</th>
+
+                  <th align="right">Price</th>
+                </tr>
+
+                {% for item in items %}
+                <tr>
+                  <td align="left">{{ item.product.name }}</td>
+                  <td align="center">{{item.variant.variant_type}}</td>
+                  <td align="center">{{ item.quantity }}</td>
+                  <td align="center">
+                    <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}" width="50" height="100"/>
+                      <br><a href="{{item.product.image_url}}">open image</a>
+                    </img>
+                  </td>
+                  <td align="right">{{ item.price }} each</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </td>
+          </tr>
+
+          <!-- Totals -->
+          <tr>
+            <td style="padding-top:16px;">
+              <table width="100%">
+                <tr>
+                  <td>Subtotal</td>
+                  <td align="right">{{ order.total_amount }}</td>
+                </tr>
+                <tr>
+                  <td>Shipping</td>
+                  <td align="right">{{ order.shipping_cost }}</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:bold; padding-top:8px;">Grand Total</td>
+                  <td align="right" style="font-weight:bold; padding-top:8px;">
+                    {{ order.grand_total }}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:24px; color:#777; font-size:12px;">
+              © {{ now|date:"Y" }} Aquatic Exotica<br>
+              This is an automated email. Please do not reply.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

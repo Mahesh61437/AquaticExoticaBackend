@@ -6,6 +6,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db import transaction
+from django.core.mail import send_mail, EmailMessage
+from django.core.cache import cache
+import random
 import logging
 
 
@@ -79,6 +82,66 @@ class LogoutView(APIView):
         except Exception as e:
             logger.error(f"Error during logout for user {request.user.username}: {str(e)}")
         return JsonResponse({'message': 'Logged out successfully'})
+    
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+
+    def post(self, request, action):
+        '''
+        Reset password functionality
+        '''
+        email = request.data.get('email')
+        password = request.data.get('password')
+        confirm_password = request.data.get('confirm_password')
+
+        logger.info(f"Password reset attempt for email: {email}")
+        if password != confirm_password:
+            logger.warning(f"Password reset failed: Passwords do not match for email: {email}")
+            return JsonResponse({'message': 'Passwords do not match'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = User.objects.get(email=email)
+            if action == 'send_otp':
+                # Rudimentary email validation
+                if "@" not in email:
+                    return JsonResponse({"message": "Invalid email address"}, status=status.HTTP_400_BAD_REQUEST)
+
+                try:
+                    otp = str(random.randint(100000, 999999))
+                    cache.set('hello', 'world', timeout=10)
+                    print(otp, '---------------', email)
+                    cache.set(f"otp_{email}", otp, timeout=10*60)  # OTP valid for 10 minutes
+                    print(otp, '---------------', email)
+                    # send_mail requires EMAIL_BACKEND configured in settings
+                    msg = EmailMessage(
+                        from_email='mahesh@aquaticexotica.com',
+                        to=[email],
+                    )
+                    msg.template_id = "d-89d8f92ee9ed4c6592b3b8b83c975262"
+                    msg.dynamic_template_data = f'reset OTP for the Aquatic Exotica account is {otp}. This OTP is valid for 10 minutes.'
+                    msg.send(fail_silently=False)
+                    logger.info(f"OTP sent successfully to email: {email}")
+                    return JsonResponse({f"message": "OTP has been sent successfully to your email {email[:2]}****{email.split('@')[0][-2:]}@{email.split('@')[1]}"}, status=status.HTTP_200_OK)
+                except Exception as exc:
+                    return JsonResponse({"message": "Failed to send your message.", "error": str(exc)}, status=status.HTTP_200_OK)
+
+            elif action == 'reset-password':
+                otp = request.data.get('otp')
+                cached_otp = cache.get(f"otp_{email}")
+
+                if cached_otp != otp:
+                    logger.warning(f"Password reset failed: Invalid OTP for email: {email}")
+                    return JsonResponse({'message': 'Invalid or expired OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+                user.set_password(password)
+                user.save()
+                cache.delete(f"otp_{email}")
+                logger.info(f"Password reset successfully for email: {email}")
+                return JsonResponse({'message': 'Password reset successfully'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            logger.warning(f"Password reset failed: User not found for email: {email}")
+            return JsonResponse({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class MeView(APIView):

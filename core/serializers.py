@@ -195,7 +195,6 @@ class ProductSerializer(serializers.ModelSerializer):
         return instance
 
     def create(self, validated_data):
-        print(f"debug: validated_data={validated_data}")
         tags = validated_data.pop("tags", None)
         variants_data = validated_data.pop("productvariants", None)
         images_data = validated_data.pop("images", None)

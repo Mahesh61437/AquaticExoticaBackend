@@ -306,7 +306,7 @@ class OrderItem(models.Model):
         ordering = ['created_at']
 
     def __str__(self):
-        variant = f" ({self.variant.get_category_display()})" if self.variant else ""
+        variant = f" ({self.variant.variant_type})" if self.variant else ""
         return f"Order #{self.order.id} - {self.product.name} {variant} (x{self.quantity})"
 
     @property

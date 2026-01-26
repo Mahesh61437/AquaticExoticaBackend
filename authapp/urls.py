@@ -8,6 +8,7 @@ from .views import (
     AdminStatusView,
     UpdateProfileView,
     CreateFirstAdminView,
+    ForgotPasswordView,
 )
 
 urlpatterns = [
@@ -18,4 +19,6 @@ urlpatterns = [
     path('admin-status', AdminStatusView.as_view(), name='admin_status'),
     path('update-profile', UpdateProfileView.as_view(), name='update_profile'),
     path('create-first-admin', CreateFirstAdminView.as_view(), name='create_first_admin'),
+    path('forgot-password/<str:action>', ForgotPasswordView.as_view(), name='send_otp'),
+    path('forgot-password/<str:reset_password>', ForgotPasswordView.as_view(), name='reset_password'),
 ]

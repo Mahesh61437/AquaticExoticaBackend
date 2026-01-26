@@ -4,12 +4,14 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.timezone import now
 from django_filters.rest_framework import DjangoFilterBackend
+from django.core.mail import send_mail, EmailMessage, EmailMultiAlternatives
+from django.template.loader import render_to_string
 from rest_framework import viewsets, filters, generics, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import send_mail, EmailMessage
+
 import logging
 
 from .filters import ProductFilter
@@ -66,7 +68,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         fields (variants, tags, category_id) are accepted. List views keep the
         lighter `ProductListSerializer`.
         """
-        print(f"debug: action={self.action}")
         if self.action == "retrieve":  # GET /products/<id>/
             return ProductDetailSerializer
         if self.action in ("create", "update", "partial_update"):
@@ -234,6 +235,41 @@ class OrderViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return qs  # Admin sees all orders
         return qs.filter(user=user)  # Regular users see only their orders
+    
+    def create(self, request, *args, **kwargs):
+        """Override create to set the order's user to the requesting user."""
+        response = super().create(request, *args, **kwargs)
+        self.send_email(response)
+        return response
+    
+    def send_email(self, instance):
+        """Send order confirmation email to customer and admin."""
+        # Implement email sending logic here
+        admin_users = User.objects.filter(is_staff=True, is_active=True).values_list('email', flat=True)
+        admin_users = list(admin_users)
+        instance = instance.data
+        order_items = Order.objects.prefetch_related('items',
+                                                     'items__product', 
+                                                     'items__variant').filter(id=instance.get('id'))
+        logger.info(f"Sending order confirmation email for order ID: {instance.get('id')} to admins: {admin_users}")
+
+        try:
+            html_content = render_to_string('orders/confirm_order.html', {
+                'order': order_items.first(),
+                'items': instance.get('items', []),
+            })
+
+            email = EmailMultiAlternatives(
+                subject="Order Confirmation",
+                body="Thank you for your order. Please find the details below.",
+                from_email=None,  # uses DEFAULT_FROM_EMAIL
+                to=admin_users,
+            )
+            email.attach_alternative(html_content, "text/html")
+            email.send(fail_silently=False)
+        except Exception as exc:
+            logger.error(f"Failed to send order confirmation email: {exc}")
+
 
     @action(detail=False, methods=["get"], url_path="myorders")
     def my_orders(self, request):
