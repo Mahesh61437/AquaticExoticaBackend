@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from django.db.models import F
 from .models import (
     Product, Category, ShippingAddress, Order, OrderItem,
     ProductImage, Cart, CartItem, StockNotification, Tag, AppNotification,
@@ -478,6 +479,10 @@ class OrderSerializer(serializers.ModelSerializer):
                 quantity=quantity,
                 price=price
             )
+            
+            # Update stock for the variant if applicable
+            if variant:
+                ProductVariant.objects.filter(id=variant.id).update(stock=F('stock') - quantity)
 
         order.total_amount = total
         order.save()

@@ -215,6 +215,8 @@ CACHES = {
     }
 }
 
+TTL_CACHE = 60 * 10  # 10 minutes
+
 
 AUTH_USER_MODEL = 'core.User'
 
