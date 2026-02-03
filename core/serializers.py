@@ -522,6 +522,33 @@ class CartSerializer(serializers.ModelSerializer):
 
     def get_total_price(self, obj):
         return sum(item.total_price for item in obj.items.all())
+    
+class AbandonedCartUserSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = Cart
+        fields = ("id", "user")
+        read_only_fields = ("id", "user")
+
+class AbandonedCartVariantSerializer:
+    class Meta:
+        Model = ProductVariant
+        fields = ('variant_type', 'description', 'offer_price', 'original_price')
+
+class AbandonedCartItemSerializer(serializers.ModelSerializer):
+    cart = AbandonedCartUserSerializer()
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    image_url = serializers.URLField(source='product.image_url', read_only=True)
+    variant = ProductVariantSerializer()
+
+    class Meta:
+        model = CartItem
+        fields = ("id", "product", "product_name", "quantity", 
+                  "cart", "variant","image_url",
+                  "created_at", "updated_at"
+                  )
+        read_only_fields = ("id", "created_at", "updated_at", "cart", "product")
+        ordering = ['-updated_at']
 
 
 class StockNotificationSerializer(serializers.ModelSerializer):

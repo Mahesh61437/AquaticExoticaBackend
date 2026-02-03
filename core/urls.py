@@ -4,7 +4,8 @@ from rest_framework.routers import SimpleRouter
 from .views import (
     ProductViewSet, CategoryViewSet, OrderViewSet,ProductVariantViewSet,
     ContactView, StockNotificationSubscribeView, CartViewSet,
-    StockNotificationNotifyView, UserAdminViewSet, TagViewSet, ShippingAddressViewSet, AppNotificationViewSet
+    StockNotificationNotifyView, UserAdminViewSet, TagViewSet, ShippingAddressViewSet,
+    AppNotificationViewSet, AbandonCartViewSet
 )
 
 
@@ -44,6 +45,7 @@ router.register(r'tags', TagViewSet, basename='tag')
 router.register(r'shippingaddress', ShippingAddressViewSet, basename='shippingaddress')
 router.register(r'app_notifications', AppNotificationViewSet, basename='app_notifications')
 router.register(r'cart', CartViewSet, basename='cart')
+router.register(r'abandoned-cart', AbandonCartViewSet, basename='abandoned_cart')
 
 urlpatterns = [
     # Explicit PUT /cart/ route (without ID) - must come before router to take precedence

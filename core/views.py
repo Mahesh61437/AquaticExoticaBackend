@@ -13,6 +13,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import logging
+from datetime import timedelta
+from django.utils import timezone
 
 from .filters import ProductFilter
 from .models import (Product, ProductVariant, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag,
@@ -21,7 +23,7 @@ from .permissions import IsAdminOrReadOnly, RoleBasedSafeWritePermission
 from .serializers import (UserSerializer, ProductSerializer, ProductVariantSerializer, OrderSerializer, CategorySerializer, CartSerializer,
                           CartItemSerializer, OrderItemSerializer, ShippingAddressSerializer,
                           StockNotificationSerializer, TagSerializer, ProductDetailSerializer, ProductListSerializer,
-                          AppNotificationSerializer)
+                          AppNotificationSerializer, AbandonedCartItemSerializer)
 
 logger = logging.getLogger('core')
 
@@ -581,6 +583,26 @@ class CartItemViewSet(viewsets.ModelViewSet):
         logger.info(f"Adding item to cart for user: {self.request.user.username}")
         cart, _ = Cart.objects.get_or_create(user=self.request.user)
         return serializer.save(cart=cart)
+
+class AbandonCartViewSet(viewsets.ModelViewSet):
+    '''
+    API endpoint for the abandon cart functionality.
+    '''
+    serializer_class = AbandonedCartItemSerializer
+    permission_classes = [IsAdminUser]
+    queryset = CartItem.objects.all().distinct()
+
+    def list(self, request, *args, **kwargs):
+        """GET /api/abandoned-cart/ - List all abandoned carts"""
+        abandoned_carts = CartItem.objects.all().distinct()
+        print(f"debug: {timezone.now()}, {timezone.now() - timedelta(minutes=30)}")
+        page = self.paginate_queryset(abandoned_carts)
+        if page is not None:
+            serializer = AbandonedCartItemSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = AbandonedCartItemSerializer(abandoned_carts, many=True)
+        return Response(serializer.data)
 
 
 class OrderItemViewSet(viewsets.ModelViewSet):
