@@ -594,8 +594,7 @@ class AbandonCartViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         """GET /api/abandoned-cart/ - List all abandoned carts"""
-        abandoned_carts = CartItem.objects.all().distinct()
-        print(f"debug: {timezone.now()}, {timezone.now() - timedelta(minutes=30)}")
+        abandoned_carts = self.queryset
         page = self.paginate_queryset(abandoned_carts)
         if page is not None:
             serializer = AbandonedCartItemSerializer(page, many=True)
