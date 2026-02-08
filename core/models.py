@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from decimal import Decimal
 from django.utils.text import slugify
+from django.db.models import Q
 import logging
 
 logger = logging.getLogger('core')
@@ -317,18 +318,38 @@ class OrderItem(models.Model):
 
 class StockNotification(models.Model):
     """Email subscriptions for stock availability notifications"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stock_notifications')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='stock_notifications', null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    email = models.EmailField(null=True, blank=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
     is_notified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'product')
+        # unique_together = ('user', 'product')
         ordering = ['-created_at']
+        constraints = [
+            # Unique email per product
+            models.UniqueConstraint(
+                fields=['product', 'email'],
+                condition=Q(email__isnull=False),
+                name='unique_email_per_product'
+            ),
+            # Unique phone per product
+            models.UniqueConstraint(
+                fields=['product', 'phone'],
+                condition=Q(phone__isnull=False),
+                name='unique_phone_per_product'
+            ),
+    ]
+
+    def create(self, valdiated_data, *args, **kwargs):
+        print(valdiated_data, args, kwargs)
 
     def __str__(self):
-        return f"{self.user.email} -> {self.product.name}"
-
+        if self.user:
+            return f"{self.user.email} -> {self.product.name}"
+        return f"Anonymous user -> {self.product.name}"
 
 class NotificationType(models.TextChoices):
     USER_SIGNUP = "user_signup", "User Signup"

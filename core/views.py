@@ -13,8 +13,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 import logging
-from datetime import timedelta
-from django.utils import timezone
+from phonenumbers import parse, is_valid_number, NumberParseException
 
 from .filters import ProductFilter
 from .models import (Product, ProductVariant, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag,
@@ -402,17 +401,35 @@ class ContactView(APIView):
 class StockNotificationSubscribeView(APIView):
     permission_classes = [AllowAny]
 
+    @staticmethod
+    def is_valid_phone(phone: str, country: str = "IN") -> bool:
+        try:
+            parsed = parse(phone, country)
+            return is_valid_number(parsed)
+        except NumberParseException:
+            return False
+
     def post(self, request):
-        email = request.data.get("email")
+        email_or_phone = request.data.get("email")
+        user = request.user if request.user.is_authenticated else None
         product_id = request.data.get("product_id")
+        is_phone = self.is_valid_phone(email_or_phone, "IN")
 
-        if not all([email, product_id]):
+        if not all([email_or_phone, product_id]):
             return Response({"message": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if "@" not in email_or_phone and not is_phone:
+            return Response({"message": "Invalid email address or phone number"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+        
+            if is_phone:
+                StockNotification.objects.create(user=user, phone=email_or_phone, product_id=product_id)
+            else:
+                i = StockNotification.objects.create(user=user, email=email_or_phone, product_id=product_id)
+        except Exception as e:
+            return Response({"message": "Notification for this product is already subsribed"})
 
-        if "@" not in email:
-            return Response({"message": "Invalid email address"}, status=status.HTTP_400_BAD_REQUEST)
-
-        StockNotification.objects.create(email=email, product_id=product_id)
         return Response({"message": "Successfully subscribed to stock notifications"})
 
 
@@ -420,14 +437,15 @@ class StockNotificationNotifyView(APIView):
     permission_classes = [IsAuthenticated, IsAdminOrReadOnly]
 
     def post(self, request):
-        product_id = request.data.get("productId")
-        product_name = request.data.get("productName")
+        product_id = request.data.get("product_id")
+        product_name = request.data.get("product_name")
         if not all([product_id, product_name]):
             return Response({"message": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
 
         subs = StockNotification.objects.filter(product_id=product_id)
-        recipients = subs.values_list("email", flat=True)
-        if not recipients:
+        recipients_emails = subs.values_list("email", flat=True)
+        recipients_phone = subs.values_list("phone", flat=True) 
+        if not recipients_emails:
             return Response({"message": "No subscribers to notify."})
 
         try:
@@ -435,7 +453,7 @@ class StockNotificationNotifyView(APIView):
                 subject=f"{product_name} is back in stock!",
                 message=f"Good news! {product_name} is now available. Visit our store to purchase.",
                 from_email=None,
-                recipient_list=list(recipients),
+                recipient_list=list(recipients_emails),
             )
             subs.delete()  # Clear after sending
             return Response({"message": "Successfully notified subscribers."})
