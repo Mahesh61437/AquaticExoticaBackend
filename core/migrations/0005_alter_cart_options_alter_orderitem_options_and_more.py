@@ -44,10 +44,10 @@ class Migration(migrations.Migration):
             model_name='product',
             name='image_url',
         ),
-        migrations.AlterUniqueTogether(
-            name='stocknotification',
-            unique_together={('user', 'product')},
-        ),
+        # migrations.AlterUniqueTogether(
+        #     name='stocknotification',
+        #     unique_together={('user', 'product')},
+        # ),
         migrations.AddField(
             model_name='cart',
             name='updated_at',
@@ -69,18 +69,18 @@ class Migration(migrations.Migration):
             name='is_notified',
             field=models.BooleanField(default=False),
         ),
-        migrations.AddField(
-            model_name='stocknotification',
-            name='product',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, to='core.product'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='stocknotification',
-            name='user',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, related_name='stock_notifications', to=settings.AUTH_USER_MODEL),
-            preserve_default=False,
-        ),
+        # migrations.AddField(
+        #     model_name='stocknotification',
+        #     name='product',
+        #     field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, to='core.product'),
+        #     preserve_default=False,
+        # ),
+        # migrations.AddField(
+        #     model_name='stocknotification',
+        #     name='user',
+        #     field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.CASCADE, related_name='stock_notifications', to=settings.AUTH_USER_MODEL),
+        #     preserve_default=False,
+        # ),
         migrations.AlterField(
             model_name='cart',
             name='user',
