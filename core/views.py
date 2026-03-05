@@ -53,7 +53,7 @@ class UserAdminViewSet(viewsets.ModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     """Product endpoints (admin & public)."""
 
-    queryset = Product.objects.all().distinct()
+    queryset = Product.objects.all().distinct().order_by('-updated_at')
     permission_classes = [RoleBasedSafeWritePermission]
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     filterset_class = ProductFilter
