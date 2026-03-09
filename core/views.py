@@ -158,7 +158,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         category = self.request.query_params.get("category")
         if category:
             queryset = queryset.filter(categories__name=category)
-        return queryset
+        return queryset.order_by("-updated_at")
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
