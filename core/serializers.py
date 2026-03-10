@@ -1,4 +1,6 @@
+from decimal import Decimal
 from rest_framework import serializers
+from django.db import transaction
 from django.contrib.auth import get_user_model
 from .models import (
     Product, Category, ShippingAddress, Order, OrderItem,
@@ -427,12 +429,13 @@ class OrderSerializer(serializers.ModelSerializer):
     def get_grand_total(self, obj):
         return obj.total_amount + obj.shipping_cost
 
+    @transaction.atomic
     def create(self, validated_data):
         request = self.context['request']
         user = request.user
 
         items_data = validated_data.pop("items")
-        shipping_cost = float(validated_data.pop("shipping_cost", 0))
+        shipping_cost = Decimal(str(validated_data.pop("shipping_cost", 0)))
         shipping_address_id = validated_data.pop("shipping_address_id", None)
 
         # Handle address
@@ -456,21 +459,18 @@ class OrderSerializer(serializers.ModelSerializer):
             user=user,
             shipping_address=shipping_address,
             shipping_cost=shipping_cost,
-            total_amount=0
+            total_amount=Decimal('0.00')
         )
 
-        total = 0
+        total = Decimal('0.00')
         for item in items_data:
-
-            # DRF's PrimaryKeyRelatedField resolves "product_id" to a Product instance,
-            # so item["product_id"] is not just an ID, but the actual Product object.
-            # Hence, we assign it to 'product' and use it directly when creating the OrderItem.
+            # DRF's PrimaryKeyRelatedField resolves "product_id" to a Product instance
             product = item["product_id"]
             quantity = item["quantity"]
             variant = item.get("variant_id", None)
-            price = float(item["price"])
+            price = Decimal(str(item["price"]))
 
-            total += quantity * price
+            total += Decimal(str(quantity)) * price
 
             OrderItem.objects.create(
                 order=order,

@@ -19,8 +19,15 @@ class SignupView(APIView):
     def post(self, request):
         username = request.data.get('email')
         password = request.data.get('password')
-        full_name = request.data.get('fullName') or request.data.get('full_name')
-        first_name, last_name = full_name.split() if full_name and len(full_name.split()) > 1 else (full_name, '')
+        full_name = (request.data.get('fullName') or request.data.get('full_name') or '').strip()
+        
+        # Robust name splitting: first word is first_name, the rest is last_name
+        if full_name:
+            name_parts = full_name.split(None, 1)
+            first_name = name_parts[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ''
+        else:
+            first_name, last_name = '', ''
 
         logger.info(f"Signup attempt for username: {username}")
 
@@ -151,8 +158,14 @@ class CreateFirstAdminView(APIView):
 
         email = request.data.get('email')
         password = request.data.get('password')
-        full_name = request.data.get('fullName')
-        first_name, last_name = full_name.split() if full_name and len(full_name.split()) > 1 else (full_name, '')
+        full_name = (request.data.get('fullName') or '').strip()
+        
+        if full_name:
+            name_parts = full_name.split(None, 1)
+            first_name = name_parts[0]
+            last_name = name_parts[1] if len(name_parts) > 1 else ''
+        else:
+            first_name, last_name = '', ''
 
         if User.objects.filter(is_staff=True).exists():
             logger.warning("Admin users already exist")

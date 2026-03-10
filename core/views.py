@@ -1,8 +1,9 @@
-from django.db.models import Q
+from django.db.models import Q, Sum, F, Count
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
-from django.db import models
+from django.db import models, transaction
 from django.utils.timezone import now
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters, generics, status
 from rest_framework.decorators import action
@@ -12,7 +13,7 @@ from rest_framework.views import APIView
 from django.core.mail import send_mail, EmailMessage
 import logging
 
-from .filters import ProductFilter
+from .filters import ProductFilter, OrderFilter
 from .models import (Product, ProductVariant, Order, Category, Cart, CartItem, OrderItem, ShippingAddress, StockNotification, Tag,
                      AppNotification, NotificationType)
 from .permissions import IsAdminOrReadOnly, RoleBasedSafeWritePermission
@@ -226,6 +227,10 @@ class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.prefetch_related("items", "items__product", "items__variant").all()
     serializer_class = OrderSerializer
     permission_classes = [RoleBasedSafeWritePermission]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_class = OrderFilter
+    search_fields = ["id", "user__username", "user__email", "shipping_address__recipient_name"]
+    ordering_fields = ["created_at", "total_amount"]
 
     def get_queryset(self):
         logger.info(f"Fetching orders for user: {self.request.user.username}")
@@ -234,6 +239,102 @@ class OrderViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return qs  # Admin sees all orders
         return qs.filter(user=user)  # Regular users see only their orders
+
+    @action(detail=False, methods=["get"], url_path="sales-stats", permission_classes=[IsAdminUser])
+    def sales_stats(self, request):
+        start_date = request.query_params.get("start_date")
+        end_date = request.query_params.get("end_date")
+        statuses = request.query_params.getlist("status[]")
+        
+        # If no statuses provided in list format, try single param
+        if not statuses:
+            status_param = request.query_params.get("status")
+            if status_param:
+                statuses = [status_param]
+
+        qs = Order.objects.all()
+        
+        if statuses:
+            qs = qs.filter(status__in=statuses)
+        else:
+            # Default statuses if none provided
+            qs = qs.filter(status__in=['processing', 'shipped', 'delivered'])
+            
+        if start_date:
+            try:
+                qs = qs.filter(created_at__gte=start_date)
+            except (ValueError, DjangoValidationError):
+                logger.warning(f"Invalid start_date provided: {start_date}")
+        if end_date:
+            try:
+                qs = qs.filter(created_at__lte=end_date)
+            except (ValueError, DjangoValidationError):
+                logger.warning(f"Invalid end_date provided: {end_date}")
+            
+        # Overall stats
+        stats = qs.aggregate(
+            total_revenue=Sum('total_amount'),
+            total_shipping=Sum('shipping_cost'),
+            total_quantity=Sum('items__quantity')
+        )
+        
+        total_revenue = stats.get('total_revenue') or 0
+        total_shipping = stats.get('total_shipping') or 0
+        net_revenue = total_revenue 
+        grand_total = total_revenue + total_shipping
+        
+        # Product-wise aggregation
+        # We need to query OrderItem because it has the historical price
+        product_sales = OrderItem.objects.filter(order__in=qs).values(
+            'product__id', 'product__name', 'product__image_url'
+        ).annotate(
+            productId=F('product__id'),
+            name=F('product__name'),
+            imageUrl=F('product__image_url'),
+            quantitySold=Sum('quantity'),
+            totalRevenue=Sum(F('quantity') * F('price'))
+        ).order_by('-totalRevenue')
+        
+        return Response({
+            "summary": {
+                "totalRevenue": float(total_revenue),
+                "totalShipping": float(total_shipping),
+                "netRevenue": float(net_revenue),
+                "grandTotal": float(grand_total),
+                "totalQuantity": stats.get('total_quantity') or 0,
+                "uniqueProducts": product_sales.count()
+            },
+            "products": list(product_sales)
+        })
+
+    @action(detail=False, methods=["get"], url_path="processing-summary", permission_classes=[IsAdminUser])
+    def processing_summary(self, request):
+        """
+        GET /api/orders/processing-summary/
+        Returns all orders with status='processing' and an aggregated list of products needed.
+        """
+        processing_orders = Order.objects.filter(status='processing').prefetch_related("items", "items__product", "items__variant", "shipping_address")
+        
+        # Aggregate items across all processing orders
+        aggregated_items = OrderItem.objects.filter(order__in=processing_orders).values(
+            'product__id', 'product__name', 'product__image_url', 'variant__id', 'variant__description'
+        ).annotate(
+            productId=F('product__id'),
+            productName=F('product__name'),
+            imageUrl=F('product__image_url'),
+            variantId=F('variant__id'),
+            variantName=F('variant__description'),
+            totalQuantity=Sum('quantity'),
+            avgPrice=Sum(F('quantity') * F('price')) / Sum('quantity')
+        ).order_by('product__name')
+        
+        # Serialize orders
+        order_serializer = self.get_serializer(processing_orders, many=True)
+        
+        return Response({
+            "orders": order_serializer.data,
+            "aggregated_items": list(aggregated_items)
+        })
 
     @action(detail=False, methods=["get"], url_path="myorders")
     def my_orders(self, request):
@@ -253,19 +354,22 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=["post"], url_path="items", permission_classes=[IsAdminUser])
+    @transaction.atomic
     def add_item(self, request, pk=None):
         """
         POST /api/orders/<order_id>/items/ - Add item to order (Admin only)
         Body: {"product": 46, "variant": 52, "quantity": 2, "price": "18.00"}
         """
         order = self.get_object()
-        product_id = request.data.get("product")
-        variant_id = request.data.get("variant")
-        quantity = request.data.get("quantity", 1)
-        price = request.data.get("price")
-
-        if not product_id or not price:
+        if not product_id or price is None:
             return Response({"error": "Product ID and price are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            quantity = int(quantity)
+            if quantity <= 0:
+                return Response({"error": "Quantity must be positive"}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid quantity"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             product = Product.objects.get(id=product_id)
@@ -294,6 +398,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
     @action(detail=True, methods=["patch", "delete"], url_path="items/(?P<item_id>[^/.]+)", permission_classes=[IsAdminUser])
+    @transaction.atomic
     def manage_item(self, request, pk=None, item_id=None):
         """
         PATCH /api/orders/<order_id>/items/<item_id>/ - Update order item (Admin only)
@@ -313,9 +418,18 @@ class OrderViewSet(viewsets.ModelViewSet):
             price = request.data.get("price")
 
             if quantity is not None:
-                order_item.quantity = quantity
+                try:
+                    order_item.quantity = int(quantity)
+                    if order_item.quantity <= 0:
+                        return Response({"error": "Quantity must be positive"}, status=status.HTTP_400_BAD_REQUEST)
+                except (ValueError, TypeError):
+                    return Response({"error": "Invalid quantity"}, status=status.HTTP_400_BAD_REQUEST)
             if price is not None:
-                order_item.price = price
+                from decimal import Decimal, InvalidOperation
+                try:
+                    order_item.price = Decimal(str(price))
+                except (ValueError, TypeError, InvalidOperation):
+                    return Response({"error": "Invalid price"}, status=status.HTTP_400_BAD_REQUEST)
             order_item.save()
 
         # Refresh order from DB and recalculate total
@@ -358,7 +472,8 @@ class ContactView(APIView):
 
             return Response({"message": "Thank you! Your message has been sent successfully."})
         except Exception as exc:
-            return Response({"message": "Failed to send your message.", "error": str(exc)}, status=status.HTTP_200_OK)
+            logger.error(f"Failed to send contact email: {str(exc)}")
+            return Response({"message": "Failed to send your message.", "error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class StockNotificationSubscribeView(APIView):
@@ -435,6 +550,7 @@ class CartViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(cart)
         return Response(serializer.data)
 
+    @transaction.atomic
     def update(self, request, *args, **kwargs):
         """
         PUT /api/cart/ - Replace all cart items
@@ -470,6 +586,7 @@ class CartViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False, methods=["post"], url_path="items")
+    @transaction.atomic
     def add_item(self, request):
         """
         POST /api/cart/items/ - Add or update a cart item
@@ -504,6 +621,7 @@ class CartViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
     @action(detail=False, methods=["delete"], url_path="items")
+    @transaction.atomic
     def remove_item(self, request):
         """
         DELETE /api/cart/items/ - Remove item by product/variant

@@ -62,7 +62,13 @@ class PayUInitiateView(APIView):
         productinfo = f"Order #{order.id}"
         firstname = request.user.first_name or "Customer"
         email = request.user.email
-        phone = request.user.phone or order.shipping_address.recipient_phone or ""
+        
+        # Check for shipping address phone safely
+        address_phone = ""
+        if order.shipping_address:
+            address_phone = order.shipping_address.recipient_phone or ""
+            
+        phone = request.user.phone or address_phone
         
         # Create payment record
         payment = PayUPayment.objects.create(

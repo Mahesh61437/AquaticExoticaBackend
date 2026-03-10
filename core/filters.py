@@ -1,7 +1,7 @@
 import django_filters
 from django.db.models import Q
 
-from .models import Product
+from .models import Product, Order
 
 
 class NumberInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
@@ -56,3 +56,13 @@ class ProductFilter(django_filters.FilterSet):
             "is_trending",
         ]
 
+
+class OrderFilter(django_filters.FilterSet):
+    status = django_filters.CharFilter(field_name="status", lookup_expr="iexact")
+    status_in = django_filters.BaseInFilter(field_name="status", lookup_expr="in")
+    start_date = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="gte")
+    end_date = django_filters.DateTimeFilter(field_name="created_at", lookup_expr="lte")
+
+    class Meta:
+        model = Order
+        fields = ["status", "start_date", "end_date"]

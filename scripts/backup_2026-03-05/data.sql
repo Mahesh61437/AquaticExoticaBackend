@@ -1,3 +1,28 @@
+-- Clear existing table data before inserting
+TRUNCATE TABLE public.auth_permission CASCADE;
+TRUNCATE TABLE public.core_appnotification CASCADE;
+TRUNCATE TABLE public.core_cart CASCADE;
+TRUNCATE TABLE public.core_product CASCADE;
+TRUNCATE TABLE public.core_productvariant CASCADE;
+TRUNCATE TABLE public.core_cartitem CASCADE;
+TRUNCATE TABLE public.core_category CASCADE;
+TRUNCATE TABLE public.core_order CASCADE;
+TRUNCATE TABLE public.core_orderitem CASCADE;
+TRUNCATE TABLE public.core_product_categories CASCADE;
+TRUNCATE TABLE public.core_product_tags CASCADE;
+TRUNCATE TABLE public.core_productimage CASCADE;
+TRUNCATE TABLE public.core_shippingaddress CASCADE;
+TRUNCATE TABLE public.core_user CASCADE;
+TRUNCATE TABLE public.core_stocknotification CASCADE;
+TRUNCATE TABLE public.core_tag CASCADE;
+TRUNCATE TABLE public.django_content_type CASCADE;
+TRUNCATE TABLE public.django_migrations CASCADE;
+TRUNCATE TABLE public.django_session CASCADE;
+TRUNCATE TABLE public.django_site CASCADE;
+TRUNCATE TABLE public.payments_payupayment CASCADE;
+TRUNCATE TABLE public.session CASCADE;
+TRUNCATE TABLE public.token_blacklist_outstandingtoken CASCADE;
+
 --
 -- PostgreSQL database dump
 --
